@@ -36,8 +36,10 @@ class Vehicle:
         return Vehicle(self.x, self.y, self.speed, self.head,
                       self.accel, self.wheel)
                       
-    def moveCA(self, t): # t can be scalar or numpy array
-        #wheel actualy angular velocity
+                      
+    def moveCA(self, t): # constant acceleration + angular velocity
+        # t can be scalar or numpy array
+        # wheel actualy angular velocity
         a = self.accel
         w = self.wheel
         v0 = self.speed
