@@ -1,0 +1,27 @@
+function totalLength = distanceAlongRoad(road, point)
+    % if point is not on road, results are not guaranteed to make sense
+
+    done = 0;
+    totalLength = 0;
+    for i = 1:size(road,1)
+        segment = road(i,:);
+        if ~done    
+            if AboutEqual(point, closestPoint(segment,point))
+                if segment(3) < 0
+                    totalLength = totalLength + norm(point - segment);
+                else
+                    totalLength = totalLength + acos(1 - ...
+            sum((point - startPoint(segment)).^2) ...
+            /segment(3)^2 / 2) * segment(3); 
+                end
+                done = 1;
+            else
+                if segment(3) < 0
+                    totalLength = totalLength + segment(4);
+                else
+                    totalLength = totalLength + abs(segment(5)*segment(3));
+                end
+            end
+        end
+    end
+end

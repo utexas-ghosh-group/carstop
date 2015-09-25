@@ -1,0 +1,6 @@
+make .kml file in Google Earth (if you open this .kml with Google Earth, you'll see the needed format)
+readKml (with correct input .kml)
+gdaltransform -s_srs EPSG:4326 -t_srs EPSG:3497 <unconverted.csv >converted.csv
+generateRoad
+make road_transitions.csv (by hand is probably necessary, pdf in DAQ folder is easy reference)
+addTransitions

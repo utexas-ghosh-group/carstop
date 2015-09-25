@@ -1,0 +1,20 @@
+features:
+1:8, 14:20 of original data files
+1 Vehicle ID
+2 Frame ID
+3 Number Of Frames (for this vehicle)
+4 time (in ms, with 1.11893*10^12 subtracted from original to simplify a little)
+5,6 position x,y (local, meters)
+	What we used to use for location data, will only be used for finding segments.
+7,8 position x,y  (CA State plane (0405), in meters)
+	This data should be the same but shifted and rotated.
+	x = subtracted 1,966,000 m
+	y = subtracted 570,000 m
+9:15 lane ID, origin, destination, intersection, section, direction
+	Same as in original data files
+
+
+intersection: 2 597.313, 944.629
+1 549.173 843.863
+3 677.769 1234.848
+4 706.748 1265.913
