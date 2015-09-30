@@ -48,22 +48,41 @@ class InitializeParams:
         
     def outputList(self):
         # returns parameters, currently not used
-        return [self.ego_velocity, self.ego_acceleration, self.ego_angVel,
-                self.alter_heading, self.alter_velocity, self.alter_accel, 
-                self.alter_angVel]
+        return [self.ego_velocity, self.ego_accel, self.ego_angVel,
+                self.alter_velocity, self.alter_accel, self.alter_heading, 
+                self.alter_angVel, self.emergencyMoves]
         
         
     def initFree(self):
         self.ego_velocity = rnd.uniform(15,30)
         self.ego_accel = rnd.uniform(-1,1)
-        typAngVel = alph2om(pi/10 , self.ego_velocity)
+        typAngVel = 20 * pi/180
+        #typAngVel = alph2om(pi/10 , self.ego_velocity)
         self.ego_angVel = rnd.uniform(-typAngVel, typAngVel)
         
         self.alter_heading = rnd.uniform(-pi,pi)
         self.alter_velocity = rnd.uniform(15,30)
         self.alter_accel = rnd.uniform(-1,1)
-        typAngVel = alph2om(pi/10 , self.alter_velocity)
+        #typAngVel = alph2om(pi/10 , self.alter_velocity)
         self.alter_angVel = rnd.uniform(-typAngVel, typAngVel)
         
-        bigAngVel = alph2om(pi/6 , self.ego_velocity)
+        
+        # 20 deg/s is max the occurs, 40 is max for normal cars without flipping, etc.
+        bigAngVel = 40 * pi/180
+        #bigAngVel = alph2om(pi/6 , self.ego_velocity)
         self.emergencyMoves = simpleEmergencyMoves(2,2,bigAngVel,bigAngVel)
+        
+        
+    def initRuralRoad(self):
+        self.ego_velocity = rnd.uniform(20,40)
+        self.ego_accel = rnd.uniform(-1,1)
+        typAngVel = 10 * pi/180
+        self.ego_angVel = rnd.uniform(-typAngVel, typAngVel)
+        
+        self.alter_heading = rnd.uniform(pi-.5, pi)*rnd.choice((-1,1)) # head-on collisions
+        self.alter_velocity = rnd.uniform(20,40)
+        self.alter_accel = rnd.uniform(-1,1)
+        self.alter_angVel = rnd.uniform(-typAngVel, typAngVel)
+        
+        bigAngVel = 20 * pi/180 # can't turn too much
+        self.emergencyMoves = simpleEmergencyMoves(2,3,bigAngVel,bigAngVel)
