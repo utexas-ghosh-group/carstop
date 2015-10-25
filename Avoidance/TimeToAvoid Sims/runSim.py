@@ -11,7 +11,7 @@ import numpy as np
 #import time
 
 
-initializationType = 'Free'
+initializationType = 'Rural Road'
 
 numTrials = 1000
 
@@ -24,10 +24,9 @@ output = []
 #starttime = time.clock()
 for trial in range(numTrials):
     params = InitializeParams(initializationType)
-    trialOut = timeToAvoid(params.ego_velocity, params.ego_accel,
-                           params.ego_angVel, params.alter_velocity,
-                           params.alter_accel, params.alter_heading,
-                           params.alter_angVel, params.emergencyMoves)
+    trialOut = timeToAvoid(*params.outputList())
+    if trialOut is None:
+        print params.outputList()
     output.append( trialOut )
 #looptime = time.clock()
 

@@ -12,13 +12,6 @@ from simVehicle import Vehicle, VEHlength, VEHwidth
 # unchanging parameters
 DELT = 0.1   # resolution of time measures
 
-max_accel = 1.
-max_decel = 1.
-max_left = 1.
-max_right = 1.
-emergencyMoves = ((max_accel, 0), (max_accel, max_left), (max_accel, -max_right),
-                  (-max_decel, 0), (-max_decel, max_left), (-max_decel, -max_right))    
-
 def timeToAvoid(ego_v, ego_a, ego_wheel, alter_v, alter_a, alter_head,
                 alter_wheel, emergencyMoves):
     # inputs are ints, except 
@@ -59,7 +52,7 @@ def timeToAvoid(ego_v, ego_a, ego_wheel, alter_v, alter_a, alter_head,
                                  xcenter[1] + uniform(-VEHlength, VEHlength),
                                  alter_v, alter_head, alter_a, alter_wheel)
         # check recent past, find first moment of collision
-        timesBackwards = np.arange(-5, 0, DELT)
+        timesBackwards = np.arange(-5, DELT, DELT)
         egoPositions = ego.moveCA(timesBackwards)
         alterPositions = temp_alter.moveCA(timesBackwards)
         collisions = collisionCheck.check(egoPositions,alterPositions,vsize,vsize)
