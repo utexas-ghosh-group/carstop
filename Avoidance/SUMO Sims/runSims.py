@@ -18,5 +18,5 @@ for run in range(1,numberOfRuns+1):
     runSim.init(run)
     thisSumoOutFile = "./Results/out" + str(run) + ".xml"
     thisCsvFile = "./Results/" + nameOfSim + str(run) + ".csv"
-    os.system("python ../tools/xml/xml2csv.py " + thisSumoOutFile + 
+    os.system("python " + toolsPathName + "/xml/xml2csv.py " + thisSumoOutFile + 
         " --output " + thisCsvFile)

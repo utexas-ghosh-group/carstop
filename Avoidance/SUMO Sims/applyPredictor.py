@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import os
 import collisionCheck
-import Analyzers
+import Predictors
 
 vehicleFolder = os.path.realpath("Results")
 sensorFolder = os.path.realpath("Sensor Results")
@@ -16,11 +16,11 @@ outputFolder = os.path.realpath("Analysis")
 
 # parameters to change:
 simName = "highway"
-nsims = 10
+nsims = 6
 egoID = 'ego'
 minPredict = 3 # seconds
 maxPredict = 5 # seconds
-trajectoryPredictor = Analyzers.RearEndPredict
+trajectoryPredictor = Predictors.GenericNoisePredict
 
 
 truth = []
@@ -88,7 +88,7 @@ for simIndex in range(nsims):
                         egoVehicle['time'] < time+maxPredict)
         predictTimes = list( egoVehicle[predictZone]['time'] )      
         
-        #for each other vehicle, predict path  
+        # for each other vehicle, predict path  
         for vehID in otherIDs:
             predictedPath = trajectoryPredictor(allSensors[vehID],
                                                 allVehicles[vehID],
@@ -108,7 +108,7 @@ for simIndex in range(nsims):
 nTP = 0.0
 nT = 0.0
 nP = 0.0
-tolerance = 1
+tolerance = .5
 for sim in range(nsims):
     trueCollision = truth[sim]
     predictedCollision = pred[sim]
