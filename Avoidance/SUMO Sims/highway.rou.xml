@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+  <vType accel="2.0" decel="2.0" id="BasicControl" length="4.0" minGap="0.01" maxSpeed="10.0" sigma="0" impatience="1.0" />
+  <vType accel="2.0" decel="2.0" id="NoControlRandAccel" length="4.0" minGap="0.01" maxSpeed="40.0" sigma="0" impatience="1.0" />
+  <vType accel="3.0" decel="6.0" id="npc" length="4.0" minGap="0.01" maxSpeed="5.0" sigma="0" impatience="1.0"/>
+
+  <route id="r" edges="main out"/>
+
+  <vehicle depart="1" id="v0" route="r" type="NoControlRandAccel" departSpeed="27.0" />
+  <vehicle depart="2" id="v1" route="r" type="NoControlRandAccel" color="1,0,1" departSpeed="27.0" />
+
+</routes>

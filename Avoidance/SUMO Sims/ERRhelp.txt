@@ -1,0 +1,14 @@
+Please add problems you've had getting this to run (on any OS), and a solution if you found one.
+Thanks!
+
+ImportError: No module named traci    --->    the tools directory in the constants.py file is not being found correctly.
+
+something something no file found    --->    your SUMO commands can't be found or are named differently
+...	i.e. for Windows 64 the commands are named "sumo64.exe" instead of "sumo.exe"
+...	change the names in constants.py
+
+
+IOStream has no fileno    --->    use command line instead of editor / Spyder
+
+You're using Windows and everything is stuck on one line  ---> stupid Windows handles line changes differently
+Download Notepad++, it will automatically read things the correct way.

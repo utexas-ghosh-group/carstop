@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+  <vType accel="0.1" decel="2.0" id="RearEndEgo" length="4.0" minGap="0.01" maxSpeed="30.0" sigma="0" impatience="1.0" />
+  <vType accel="2.0" decel="7.0" id="RearEndBrake" length="4.0" minGap="0.01" maxSpeed="40.0" sigma="0" impatience="1.0" />
+
+  <route id="r" edges="main out"/>
+
+  <vehicle depart="1" id="lead" route="r" type="RearEndBrake" departSpeed="27.0" />
+  <vehicle depart="2" id="ego" route="r" type="RearEndEgo" color="1,0,1" departSpeed="27.0" />
+
+</routes>

@@ -1,0 +1,12 @@
+"python runSim.py" should run the simulation.
+"python runSim.py -g" will run it on the SUMO GUI.
+"python runSim.py -v" includes step-by-step info on position and speed.
+"python runSim.py --allow" will not stop when a collision is detected.
+"python runSim.py -c ASIMULATION" runs the simulation in ASIMULATION.sumocfg
+You can also change the line CONFIGNAME="ASIMULATION.sumocfg" in runSim.py, for the same effect.
+All of these are stackable, f'rinstance you can say "python runSim.py -g -c interTest1 --allow"
+
+"python runSims.py n" runs a simulation n times and stores the output in the Results folder.
+
+To change the model used for each car, change its type in the .rou file.
+Ex: changing veh1 in collide1.rou to type "npc" will make it stay far away from the other car.
