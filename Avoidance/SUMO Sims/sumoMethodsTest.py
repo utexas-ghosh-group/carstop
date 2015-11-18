@@ -9,12 +9,20 @@ from sumoMethods import Sumo
 
 configuration = 'emptyhighway'
 
-sim = Sumo(configuration)
+sim = Sumo(configuration, gui=True)
 
-sim.createVehicle('alone','main_0')
+sim.createVehicle('a','main_0',40)
+[lane,lanex,xy] = sim.getVehicleState('a')
+print 'a, 0: '+str(xy[0])
 
-sim.moveVehicleAlong('alone',30)
+sim.createVehicle('b','main_0')
+[lane,lanex,xy] = sim.getVehicleState('b')
+print 'b, 0: '+str(xy[0])
 
-[lane,lanex,xy] = sim.getVehicleState('alone')
+sim.moveVehicleAlong('b',38)
+[lane,lanex,xy] = sim.getVehicleState('a')
+print 'a, 1: '+str(xy[0])
+[lane,lanex,xy] = sim.getVehicleState('b')
+print 'b, 1: '+str(xy[0])
 
 sim.end()
