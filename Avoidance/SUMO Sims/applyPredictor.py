@@ -129,3 +129,6 @@ for sim in range(nsims):
 if nTP > 0:
     FN = (nT-nTP)/nT
     FP = (nP-nTP)/nP    
+    
+print "Precision: " +str(nTP/float(nP))
+print "Recall: " + str(nTP/float(nT))
