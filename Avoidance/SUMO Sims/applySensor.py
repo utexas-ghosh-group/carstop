@@ -17,23 +17,24 @@ inputFolder = os.path.realpath("Results")
 outputFolder = os.path.realpath("Sensor Results")
 
 
-simName = "highway"
-nsims = 30
+simName = "rearEnd"
+nsims = 50
 sensorToUse = Sensors.DSRC
 vehicleIDtoSeek = 'ego'
 
 
 for simIndex in range(nsims):
-    #simIndex = 0
+    #simIndex = 3
     inFile = inputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     outFile = outputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     
-    # read a result file
-    vdata = pd.read_table(inFile, sep=";")
-    vdata = vdata[["timestep_time","vehicle_id","vehicle_x","vehicle_y",
-                       "vehicle_angle","vehicle_speed"]]
-    # change names to conform to simulator code
-    vdata.columns = ["time","vehID","x","y","angle","speed"]                  
+    # read a result file - old
+    #vdata = pd.read_table(inFile, sep=";")
+    #vdata = vdata[["timestep_time","vehicle_id","vehicle_x","vehicle_y",
+    #                   "vehicle_angle","vehicle_speed"]]
+    #vdata.columns = ["time","vehID","x","y","angle","speed"]
+    # read a result file - new
+    vdata = pd.read_table(inFile, sep=',')               
     
     # rearrange data into panel of dataframes (by time)
     timeSortedData = {}

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Contains methods to create, end, and control SUMO simulation.
-last edit 11/17/15
+last major edit 11/17/15
+edit 12/8/15 : changed subprocess output
 """
 import subprocess, sys, os
 toolsPathName = "../../../cars/sumo/tools"
 binPathName = "../../../cars/sumo/bin"
 sys.path.append(os.path.realpath(toolsPathName))
+import signal
 #sys.path.append(os.path.realpath(binPathName))
 # above line is necessary if you can't fully install sumo
 
@@ -40,8 +42,9 @@ class Sumo:
             completeCommand += ["--fcd-output","./Results/%s.xml" % outFile ]
         
         ## start SUMO
-        self.sumoProcess = subprocess.Popen(completeCommand, stdout=sys.stdout,
-                                        stderr=sys.stderr)
+        self.sumoProcess = subprocess.Popen(completeCommand,
+                                            stdout=subprocess.PIPE,#sys.stdout,#
+                                            stderr=sys.stderr)
         traci.init(PORT, 4)
         
         self.outFile = outFile
@@ -84,6 +87,7 @@ class Sumo:
             currPos = prevPos + dist - traci.lane.getLength(lane)
         
         traci.vehicle.moveTo(vehID, lane, currPos)
+        traci.vehicle.setSpeed(vehID,0)
         traci.simulationStep()
         
     def getVehicleState(self,vehID):
@@ -111,12 +115,23 @@ class Sumo:
         return [traci.lane.getLength(lane),
                 traci.lane.getWidth(lane),
                 linknames]
-                
+    
     def end(self):
         traci.close()
-        self.sumoProcess.wait()
+        signal.signal(signal.SIGALRM, _timeOutHandler)
+        signal.alarm(5)
+        try:
+            self.sumoProcess.wait()
+        except Exception, exc:
+            print exc
+            self.sumoProcess.terminate()
+        signal.alarm(0)
+            
         if self.outFile is not None: # transport results to csv
             thisSumoOutFile = "./Results/" + self.outFile + ".xml"
             thisCsvFile = "./Results/" + self.outFile + ".csv"
             os.system("python " + toolsPathName + "/xml/xml2csv.py " +
                         thisSumoOutFile + " --output " + thisCsvFile)
+                        
+def _timeOutHandler():
+    raise Exception("force ending for SUMO")

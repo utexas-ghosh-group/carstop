@@ -15,16 +15,17 @@ outputFolder = os.path.realpath("Analysis")
 
 
 # parameters to change:
-simName = "highway"
-nsims = 6
+simName = "rearEnd"
+nsims = 25
 egoID = 'ego'
 minPredict = 3 # seconds
 maxPredict = 5 # seconds
 trajectoryPredictor = Predictors.GenericNoisePredict
-
+VEHsize = (5.,2.)
 
 truth = []
 pred = []
+
 
 for simIndex in range(nsims):
     #simIndex=2
@@ -32,16 +33,18 @@ for simIndex in range(nsims):
     sensorFile = sensorFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     outputFile = outputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     
-    vehicleData = pd.read_table(vehicleFile, sep=";")
-    vehicleData = vehicleData[["timestep_time","vehicle_id","vehicle_x","vehicle_y",
-                   "vehicle_angle","vehicle_speed"]]
-    vehicleData.columns = ["time","vehID","x","y","angle","speed"]
-    vehicleData['length'] = pd.Series(4.0, index=vehicleData.index)
-    vehicleData['width'] = pd.Series(2.0, index=vehicleData.index)  
+    vehicleData = pd.read_table(vehicleFile,sep=',') # new data read
+    # old data read:
+    #vehicleData = pd.read_table(vehicleFile, sep=";")
+    #vehicleData = vehicleData[["timestep_time","vehicle_id","vehicle_x","vehicle_y",
+    #               "vehicle_angle","vehicle_speed"]]
+    #vehicleData.columns = ["time","vehID","x","y","angle","speed"]
+    vehicleData['length'] = pd.Series(VEHsize[0], index=vehicleData.index)
+    vehicleData['width'] = pd.Series(VEHsize[1], index=vehicleData.index)  
     
     sensorData = pd.read_table(sensorFile,sep=",")
-    sensorData['length'] = pd.Series(4.0, index=sensorData.index)
-    sensorData['width'] = pd.Series(2.0, index=sensorData.index)
+    sensorData['length'] = pd.Series(VEHsize[0], index=sensorData.index)
+    sensorData['width'] = pd.Series(VEHsize[1], index=sensorData.index)
     
     # rearrange vehicle data into list of dataframes (by time)
     timeVehicleData = []

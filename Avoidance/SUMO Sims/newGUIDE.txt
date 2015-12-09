@@ -1,0 +1,12 @@
+run old-style simulations:
+"python runSims.py n" runs the simulation specified in runSim.py for n times and stores the output in the Results folder.
+
+run new-style simulations:
+"python [your simulation].py -i n" runs the simulation of choice n times.
+Or you can run it in Spyder, and set the number of iterations (as well as the output name) there.
+
+To get sensor data:
+applySensor
+
+To use both and find real/predicted collisions:
+applyPredictor

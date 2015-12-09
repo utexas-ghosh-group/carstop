@@ -10,5 +10,4 @@ something something no file found    --->    your SUMO commands can't be found o
 
 IOStream has no fileno    --->    use command line instead of editor / Spyder
 
-You're using Windows and everything is stuck on one line  ---> stupid Windows handles line changes differently
-Download Notepad++, it will automatically read things the correct way.
+Err 302: Broken Pipe   --->  this happens to me occasionally.  I don't know what the cause is, if it happens repeatedly just log out/restart.
