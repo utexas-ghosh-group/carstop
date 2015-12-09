@@ -5,8 +5,9 @@ last major edit 11/17/15
 edit 12/8/15 : changed subprocess output
 """
 import subprocess, sys, os
-toolsPathName = "../../../cars/sumo/tools"
-binPathName = "../../../cars/sumo/bin"
+#toolsPathName = "../../../cars/sumo/tools"
+toolsPathName = "/Users/twankim/carstop/sumo-0.24.0/tools"
+#binPathName = "../../../cars/sumo/bin"
 sys.path.append(os.path.realpath(toolsPathName))
 import signal
 #sys.path.append(os.path.realpath(binPathName))
