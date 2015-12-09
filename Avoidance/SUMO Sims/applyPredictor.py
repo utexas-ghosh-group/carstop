@@ -28,6 +28,7 @@ pred = []
 
 
 for simIndex in range(nsims):
+    print "- nsim: " + str(simIndex+1) +" / " +str(nsims)
     #simIndex=2
     vehicleFile = vehicleFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     sensorFile = sensorFolder + "/" + simName + np.str(simIndex+1) + ".csv"
@@ -87,7 +88,7 @@ for simIndex in range(nsims):
             allSensors[vehID] = currSensorData[currSensorData['vehID']==vehID]
         egoVehicle = vehicleData[vehicleData['vehID']==egoID]
         
-        predictZone = (egoVehicle['time'] > time+minPredict)*(
+        predictZone = (egoVehicle['time'] > time+minPredict)&(
                         egoVehicle['time'] < time+maxPredict)
         predictTimes = list( egoVehicle[predictZone]['time'] )      
         
