@@ -13,6 +13,8 @@ import signal
 #sys.path.append(os.path.realpath(binPathName))
 # above line is necessary if you can't fully install sumo
 
+_wait_in_s = 6
+
 import traci
 
 class Sumo:
@@ -46,12 +48,29 @@ class Sumo:
         self.sumoProcess = subprocess.Popen(completeCommand,
                                             stdout=subprocess.PIPE,#sys.stdout,#
                                             stderr=sys.stderr)
-        traci.init(PORT, 4)
+        traci.init(PORT, 10)
         
         self.outFile = outFile
     
-    
     def createVehicle(self,vehID, laneID, pos=0):
+        signal.signal(signal.SIGALRM, _timeOutHandler)
+        signal.alarm(_wait_in_s)
+        try:
+            self._createVehicle(vehID, laneID, pos)
+        except Exception, exc:
+            print exc
+            signal.alarm(_wait_in_s)
+            try:
+                 self._createVehicle(vehID, laneID, pos)
+            except Exception, exc:
+                print exc
+                print "  quitting on instruction create "+vehID
+                self.end()
+                return 1 # Sim has failed
+        signal.alarm(0)
+        return 0
+    
+    def _createVehicle(self,vehID, laneID, pos=0):
         """ inputs:
             vehID = string
             laneID = string
@@ -67,7 +86,25 @@ class Sumo:
         
         traci.simulationStep()
         
-    def moveVehicleAlong(self,vehID, dist, lane=None):
+    def moveVehicleAlong(self, vehID, dist, lane=None):
+        signal.signal(signal.SIGALRM, _timeOutHandler)
+        signal.alarm(_wait_in_s)
+        try:
+            self._moveVehicleAlong(vehID, dist, lane)
+        except Exception, exc:
+            print exc
+            signal.alarm(_wait_in_s)
+            try:
+                 self._moveVehicleAlong(vehID, dist, lane)
+            except Exception, exc:
+                print exc
+                print "  quitting on instruction move "+vehID+" "+str(dist)
+                self.end()
+                return 1 # sim has failed
+        signal.alarm(0)
+        return 0
+        
+    def _moveVehicleAlong(self,vehID, dist, lane=None):
         """ inputs:
             vehID = string
             dist = numeric, how far the vehicle should travel in meters
@@ -118,14 +155,16 @@ class Sumo:
                 linknames]
     
     def end(self):
-        traci.close()
         signal.signal(signal.SIGALRM, _timeOutHandler)
-        signal.alarm(5)
+        signal.alarm(_wait_in_s)
         try:
+            traci.close()
             self.sumoProcess.wait()
         except Exception, exc:
             print exc
             self.sumoProcess.terminate()
+            traci._connections[""].close()
+            del traci._connections[""]
         signal.alarm(0)
             
         if self.outFile is not None: # transport results to csv
@@ -134,5 +173,5 @@ class Sumo:
             os.system("python " + toolsPathName + "/xml/xml2csv.py " +
                         thisSumoOutFile + " --output " + thisCsvFile)
                         
-def _timeOutHandler():
-    raise Exception("force ending for SUMO")
+def _timeOutHandler(signum, frame):
+    raise Exception("SUMO didn't respond")

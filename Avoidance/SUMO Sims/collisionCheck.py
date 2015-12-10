@@ -64,3 +64,5 @@ def check(veh1, veh2):
     view1 = outside(veh1,getCorners(realign(veh2,veh1)))
     view2 = outside(veh2,getCorners(realign(veh1,veh2)))
     return not (view1 or view2)
+    
+collisionVars = ['x','y','angle','length','width']

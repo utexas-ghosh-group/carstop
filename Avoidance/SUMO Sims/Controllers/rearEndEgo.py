@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(__file__)[:-len("/Controllers")])
 
 class RearEndEgo:
     
-    def __init__(self,speed, accel=0):
+    def __init__(self,speed, accel=0.):
         self.speed = speed
         self.accel = accel
         
