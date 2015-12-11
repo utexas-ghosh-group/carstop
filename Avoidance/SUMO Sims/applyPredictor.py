@@ -12,23 +12,39 @@ import Predictors
 vehicleFolder = os.path.realpath("Results")
 sensorFolder = os.path.realpath("Sensor Results")
 outputFolder = os.path.realpath("Analysis")
+paramFolder = os.path.realpath("Parameters")
+simName = "rearEnd"
 
 
 # parameters to change:
 simName = "rearEnd"
-nsims = 25
+nsims = 2
 egoID = 'ego'
 minPredict = 3 # seconds
 maxPredict = 5 # seconds
-trajectoryPredictor = Predictors.GenericNoisePredict
+trajectoryPredictor = Predictors.genericNoisePredict.GenericNoisePredict # Trajectory Predictor for other vehicle
+egoPredictor = Predictors.genericNoisePredict.GenericNoisePredict # Trajectory Predictor for ego vehicle
+#trajectoryPredictor = Predictors.rearEndPredict # Trajectory Predictor for other vehicle
+#egoPredictor = Predictors.rearEndPredict # Trajectory Predictor for ego vehicle
 VEHsize = (5.,2.)
 
-truth = []
+# Input arguments for Predictor function
+# egoVehicle: vehicle's data until current time
+# predictTimes: time steps to predict
+# *args: Can send additional arguments based on Predictor's type
+
+paramFile = paramFolder+ "/" + simName + "_param.csv"
+paramTruth = pd.read_csv(paramFile)
+
+truth = paramTruth["Collision Time"].tolist()
+truthVehID = ['lead']*len(truth) # Crashed vehicle's ID for corresponding time (temporary setting)
 pred = []
+predVehID = []
 
 
 for simIndex in range(nsims):
     print "- nsim: " + str(simIndex+1) +" / " +str(nsims)
+    print " Loading and modifying data ..."
     #simIndex=2
     vehicleFile = vehicleFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     sensorFile = sensorFolder + "/" + simName + np.str(simIndex+1) + ".csv"
@@ -61,51 +77,65 @@ for simIndex in range(nsims):
         if ind == vehicleData.shape[0] - 1:
             timeVehicleData += [ vehicleData.iloc[lastIndex:ind+1] ]
     
-    # find collision times:
-    trueCollision = -1
-    for ind in range(len(timeList)):
-        currentData = timeVehicleData[ind]
-        isEgo = currentData['vehID']==egoID
-        if np.any(isEgo) and not np.all(isEgo):        
-            egoVehicle = currentData[isEgo].iloc[0]              
-            otherVehs = currentData[isEgo==False]
-            currentCollides = currentData[isEgo==False].apply(collisionCheck.check,
-                            axis=1, args=(egoVehicle,))
-            # only store first instance of collision
-            if  np.any(currentCollides) and trueCollision < 0:
-                trueCollision = timeList[ind]
-        
+#    print " Finding collision times ..."
+#    # find collision times:
+#    trueCollision = -1
+#    for ind in range(len(timeList)):
+#        currentData = timeVehicleData[ind]
+#        isEgo = currentData['vehID']==egoID
+#        if np.any(isEgo) and not np.all(isEgo):        
+#            egoVehicle = currentData[isEgo].iloc[0]              
+#            otherVehs = currentData[isEgo==False]
+#            currentCollides = currentData[isEgo==False].apply(collisionCheck.check,
+#                            axis=1, args=(egoVehicle,))
+#            # only store first instance of collision
+#            if  np.any(currentCollides) and trueCollision < 0:
+#                trueCollision = timeList[ind]
+    
+    print " Predicting collision ..."    
     predictedCollision = -1
     
+    # Save ego vehicle's true data for all time steps
+    egoVehicleTrue = vehicleData[vehicleData['vehID']==egoID]        
     for time in timeList:
+        # load data until current time
         currSensorData = sensorData[sensorData['time'] <= time]
+        egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] <= time]
         # rearrange sensor data into dict with names
-        allVehicles = {}
-        allSensors = {}
+        allVehicles = {} # All vehicle data for sensored vehicle
+        allSensors = {} # All sensored data until current time
         otherIDs = np.unique(currSensorData['vehID'])
         for vehID in otherIDs:
             allVehicles[vehID] = vehicleData[vehicleData['vehID']==vehID]
             allSensors[vehID] = currSensorData[currSensorData['vehID']==vehID]
-        egoVehicle = vehicleData[vehicleData['vehID']==egoID]
         
-        predictZone = (egoVehicle['time'] > time+minPredict)&(
-                        egoVehicle['time'] < time+maxPredict)
-        predictTimes = list( egoVehicle[predictZone]['time'] )      
+        # Time to predict: current Time+min ~ current Time+max (s)
+        # time steps are extracted from ego Vehicle
+        predictZone = (egoVehicleTrue['time'] >= time+minPredict)&(
+                        egoVehicleTrue['time'] <= time+maxPredict)
+        predictTimes = list( egoVehicleTrue[predictZone]['time'] )      
         
+        # for ego vehicle, predict path
+        egoPredicted = egoPredictor(egoVehicle, predictTimes,
+                                    egoVehicleTrue) # genericNoisePredict
+                
         # for each other vehicle, predict path  
         for vehID in otherIDs:
-            predictedPath = trajectoryPredictor(allSensors[vehID],
-                                                allVehicles[vehID],
-                                                egoVehicle, predictTimes)
+            predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes, 
+                                                allVehicles[vehID]) # genericNoisePredict
             # check for collision
             for prediction in range(len(predictTimes)):
-                thisEgo = egoVehicle[predictZone].iloc[prediction]
+                thisEgo = egoPredicted.iloc[prediction]
                 thisPath = predictedPath.iloc[prediction]
                 if collisionCheck.check(thisEgo, thisPath) and predictedCollision < 0:
                     predictedCollision = predictTimes[prediction]
+                    predictedCollisionVehID = vehID
+                    # !!!!!!!! Think about how to deal with multiple collision
+                    # !!!!!!!! Save not only collision time but names 
     
-    truth += [trueCollision]
+#    truth += [trueCollision]r
     pred += [predictedCollision]
+    predVehID += [predictedCollisionVehID]
 
 
 # basic scoring
@@ -115,12 +145,14 @@ nP = 0.0
 tolerance = .5
 for sim in range(nsims):
     trueCollision = truth[sim]
+    trueVehID = truthVehID[sim]
     predictedCollision = pred[sim]
+    predictedVehID = predVehID[sim]
     if trueCollision > 0:
         nT += 1
     if predictedCollision > 0:
         nP += 1
-    if (trueCollision > 0 and predictedCollision > 0 and
+    if (trueCollision > 0 and predictedCollision > 0 and trueVehID == predictedVehID and
         np.abs(predictedCollision - trueCollision) <= tolerance):
             nTP += 1
 

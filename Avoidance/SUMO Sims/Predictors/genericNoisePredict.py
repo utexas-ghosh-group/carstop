@@ -7,7 +7,8 @@ Only input is uniform noise magnitude... will have to become more detailed
 import numpy as np
 import pandas as pd
 
-def GenericNoisePredict(sensedV,trueV,trueEgo,predictTimes):
+def GenericNoisePredict(sensedV, predictTimes, *args):
+    trueV = args[0]
     
     error = .5    # meters
     

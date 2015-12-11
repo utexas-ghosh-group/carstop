@@ -40,7 +40,7 @@ def movePhysics(vstate,speed,accel,predictTime):
     return newstate
 
 
-def RearEndPredict(sensedV,trueV,trueEgo,predictTimes):
+def RearEndPredict(sensedV,predictTimes, *args):
     
     filterLen = min(6, sensedV.shape[0])  
     
