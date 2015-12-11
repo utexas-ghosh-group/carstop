@@ -5,16 +5,15 @@ last major edit 11/17/15
 edit 12/8/15 : changed subprocess output
 """
 import subprocess, sys, os
-#toolsPathName = "../../../cars/sumo/tools"
-toolsPathName = "/Users/twankim/carstop/sumo-0.24.0/tools"
+toolsPathName = "../../../cars/sumo/tools"
+#toolsPathName = "/Users/twankim/carstop/sumo-0.24.0/tools"
 #binPathName = "../../../cars/sumo/bin"
 sys.path.append(os.path.realpath(toolsPathName))
 import signal
 #sys.path.append(os.path.realpath(binPathName))
 # above line is necessary if you can't fully install sumo
 
-_wait_in_s = 6
-
+_wait_in_s = 4
 import traci
 
 class Sumo:
@@ -26,7 +25,8 @@ class Sumo:
             gui = boolean (optional), if True, the SUMO gui will pop up
             outFile = string (optional), file for SUMO to save data
         """
-        PORT = 8800             
+
+        PORT = 8800     
         
         # from sumo demo code (vehicleControl.py)
         try:
@@ -41,8 +41,11 @@ class Sumo:
             completeCommand = [checkBinary("sumo-gui")]
         sumoConfig = "%s.sumocfg" % (configFile)
         completeCommand += ["-c", sumoConfig]
+        completeCommand += ["--remote-port",str(PORT)]
         if outFile is not None:
             completeCommand += ["--fcd-output","./Results/%s.xml" % outFile ]
+        
+        self._C = completeCommand        
         
         ## start SUMO
         self.sumoProcess = subprocess.Popen(completeCommand,
@@ -69,6 +72,7 @@ class Sumo:
                 return 1 # Sim has failed
         signal.alarm(0)
         return 0
+        
     
     def _createVehicle(self,vehID, laneID, pos=0):
         """ inputs:
@@ -163,8 +167,9 @@ class Sumo:
         except Exception, exc:
             print exc
             self.sumoProcess.terminate()
-            traci._connections[""].close()
-            del traci._connections[""]
+            if "" in traci._connections:
+                traci._connections[""].close()
+                del traci._connections[""]
         signal.alarm(0)
             
         if self.outFile is not None: # transport results to csv
@@ -172,6 +177,7 @@ class Sumo:
             thisCsvFile = "./Results/" + self.outFile + ".csv"
             os.system("python " + toolsPathName + "/xml/xml2csv.py " +
                         thisSumoOutFile + " --output " + thisCsvFile)
-                        
+
+            
 def _timeOutHandler(signum, frame):
     raise Exception("SUMO didn't respond")

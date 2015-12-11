@@ -3,12 +3,13 @@ from sumoMethods import Sumo
 from optparse import OptionParser
 import Controllers
 import pandas as pd
-import os.path
+import os
 import time
-import random
+from random import uniform
 import collisionCheck
+from subprocess import call
 
-numiter = 2
+numiter = 200
 outputName = 'rearEnd'
 
 
@@ -19,10 +20,10 @@ paramFolder = os.path.realpath('Parameters')
 configuration = 'emptyhighway'
     
 def vehicleSpeed():
-    return random.uniform(55,85)*.447
+    return uniform(55,85)*.447
 
 def vehicleAccel():
-    return random.uniform(-1,1)
+    return uniform(-1,1)
 
 optParser = OptionParser()
 optParser.add_option("-g", "--gui", action="store_true", dest="gui",
@@ -37,15 +38,24 @@ optParser.add_option("-o", "--output", type="string", dest="outputName",
 #                     default=False, help="tell me what you are doing")
 (options, args) = optParser.parse_args()
 
+paramFile = paramFolder+'/'+options.outputName+'_param.csv'
 ParameterColumns = ['Ego Speed', 'Lead Speed', 'Ego Accel', 'Lead Accel',
                     'Brake Magnitude', 'Brake Time',
                     'Collision Time']
-params = None
 outputColumns = ['time','vehID','x','y','angle','speed']
 
 
+# smart restart if file is saved
+if 'lastStart.int' in os.listdir(os.path.realpath('.')):
+    lastStart = open('lastStart.int')
+    iteration = int(lastStart.read())
+    lastStart.close()
+    params = pd.read_csv(paramFile,header=0)    
+else:
+    iteration = 1
+    params = None
+
 ## run iteration
-iteration=1
 while iteration <= options.numiter:
     err = 0
     starttime = time.time()
@@ -129,9 +139,15 @@ while iteration <= options.numiter:
         iteration += 1
         time.sleep(.05)
     else:
-        print "iteration "+str(iteration)+" failed, retrying"
-        
-        time.sleep(1.)
+        print "iteration "+str(iteration)+" failed, SUMO is broken"
+        print "restart python and rerun, will continue from iter. "+str(iteration)
+        lastStart = open('lastStart.int','w')
+        lastStart.write(str(iteration))
+        lastStart.close()
+        break
     
-paramFile = paramFolder+'/'+options.outputName+'_param.csv'
 params.to_csv(paramFile, header=True,index=False)
+
+if ('lastStart.int' in os.listdir(os.path.realpath('.')) and
+                        iteration == options.numiter+1):
+    call(['rm','lastStart.int'])
