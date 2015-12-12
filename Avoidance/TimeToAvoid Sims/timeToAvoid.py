@@ -56,8 +56,9 @@ def timeToAvoid(ego_v, ego_a, ego_wheel, alter_v, alter_a, alter_head,
         egoPositions = ego.moveCA(timesBackwards)
         alterPositions = temp_alter.moveCA(timesBackwards)
         collisions = collisionCheck.check(egoPositions,alterPositions,vsize,vsize)
-        aa = next((i for i in range(len(collisions)) if collisions[i]), None)
-        if not aa == None:  # never was a collision
+        aa = next((i+1 for i in range(len(collisions)-1) if collisions[i+1]
+                and not collisions[i]), None)
+        if not aa is None:  # never was a collision
             ego.moveSelf(timesBackwards[aa])
             alter = temp_alter
             alter.moveSelf(timesBackwards[aa])
@@ -75,8 +76,8 @@ def timeToAvoid(ego_v, ego_a, ego_wheel, alter_v, alter_a, alter_head,
         past_alter = alter.copy()
         past_alter.moveSelf(-ttA)
         
-        # check up to 2 seconds past the original collision
-        timesAhead = np.arange(DELT, ttA+2, DELT)
+        # check up to 3 seconds past the original collision
+        timesAhead = np.arange(DELT, ttA+3., DELT)
         alterPositions = past_alter.moveCA(timesAhead)
         
         for movement in emergencyMoves:
