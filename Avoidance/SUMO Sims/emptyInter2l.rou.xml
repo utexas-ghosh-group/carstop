@@ -8,5 +8,7 @@
   <route id="2i" edges="2i 1o"/>
   <route id="3i" edges="3i 4o"/>
   <route id="4i" edges="4i 3o"/>
-
+  <route id="3left" edges="3i 1o"/>
+  <route id="3right" edges="3i 2o"/>
+  <route id="1left" edges="1i 4o"/>
 </routes>

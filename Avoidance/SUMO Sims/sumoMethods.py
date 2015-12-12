@@ -56,6 +56,15 @@ class Sumo:
         self.outFile = outFile
     
     def createVehicle(self,vehID, laneID, pos=0):
+        """ inputs: 
+            vehID = string \n
+            laneID = string \n
+            pos = numeric (default 0) \n \n
+            
+            for this to work as currently implemented, all lanes in the .net
+            file must be named 'road_laneIndex'
+            and there must be a route (.rou file) named 'road'
+        """
         signal.signal(signal.SIGALRM, _timeOutHandler)
         signal.alarm(_wait_in_s)
         try:
@@ -73,24 +82,22 @@ class Sumo:
         signal.alarm(0)
         return 0
         
-    
     def _createVehicle(self,vehID, laneID, pos=0):
-        """ inputs:
-            vehID = string
-            laneID = string
-            pos = numeric (default 0)
-            
-            for this to work as currently implemented, all lanes in the .net
-            file must be named 'road_laneIndex'
-            and there must be a route (.rou file) named 'road'
-        """
-        routeID = laneID[:laneID.rfind('_')]
+        routeID = _edge(laneID)
         laneIndex = int( laneID[laneID.rfind('_')+1:] )
         traci.vehicle.add(vehID,routeID,pos=pos,lane=laneIndex)
-        
         traci.simulationStep()
         
+        
     def moveVehicleAlong(self, vehID, dist, lane=None):
+        """ inputs:
+            vehID = string \n
+            dist = numeric, how far the vehicle should travel in meters \n
+            lane = string (optional), lane to switch to \n
+            
+            knowing when it's appropriate to switch roads is up to the
+            user for now
+        """
         signal.signal(signal.SIGALRM, _timeOutHandler)
         signal.alarm(_wait_in_s)
         try:
@@ -109,14 +116,6 @@ class Sumo:
         return 0
         
     def _moveVehicleAlong(self,vehID, dist, lane=None):
-        """ inputs:
-            vehID = string
-            dist = numeric, how far the vehicle should travel in meters
-            lane = string (optional), lane to switch to
-            
-            knowing when it's appropriate to switch roads is up to the
-            user for now
-        """
         prevLane = traci.vehicle.getLaneID(vehID)
         prevPos = traci.vehicle.getLanePosition(vehID)
         
@@ -127,23 +126,55 @@ class Sumo:
             currPos = prevPos + dist
         else: # changing lanes, assume you complete old lane
             currPos = prevPos + dist - traci.lane.getLength(lane)
+            thisroute = traci.vehicle.getRoute(vehID)
+            if not _edge(lane) in thisroute: # have to change route
+                changedRoute = False
+                for r in traci.route.getIDList():
+                    redges = traci.route.getEdges(r)
+                    if _edge(prevLane) in redges and _edge(lane) in redges:
+                        traci.vehicle.setRouteID(vehID, r)
+                        changedRoute=True
+                        break
+                if not changedRoute:
+                    print("failed to find route, probably crashing")
         
         traci.vehicle.moveTo(vehID, lane, currPos)
         traci.vehicle.setSpeed(vehID,0)
         traci.simulationStep()
         
-    def getVehicleState(self,vehID):
+        
+    def removeVehicle(self,vehID):
         """ input: vehID = string
-            output: [laneID = string, position on lane = num,
-                     coordinate position = (num,num)]
         """
-        # [lane id, position along lane, position as (x,y)]
+        signal.signal(signal.SIGALRM, _timeOutHandler)
+        signal.alarm(_wait_in_s)
+        try:
+            self._removeVehicle(vehID)
+        except Exception, exc:
+            print exc
+            print "  quitting on instruction remove "+vehID
+            self.end()
+            return 1 # sim has failed
+        signal.alarm(0)
+        return 0
+        
+    def _removeVehicle(self,vehID):
+        traci.remove(vehID)
+        traci.simulationStep()
+    
+    
+    def getVehicleState(self,vehID):
+        """ input: vehID = string \n
+            output: [laneID = string, position on lane = num,
+                     coordinate position = (num,num), angle = num (deg)]
+        """
         return [traci.vehicle.getLaneID(vehID),
                 traci.vehicle.getLanePosition(vehID),
-                traci.vehicle.getPosition(vehID)]
+                traci.vehicle.getPosition(vehID),
+                traci.vehicle.getAngle(vehID)]
         
     def getLaneInfo(self,lane):
-        """ input: laneID = string
+        """ input: laneID = string \n
             output: [lane length = num, lane width = num,
                      IDs of upcoming connected lanes = [string] ]
         """
@@ -181,3 +212,6 @@ class Sumo:
             
 def _timeOutHandler(signum, frame):
     raise Exception("SUMO didn't respond")
+    
+def _edge(laneID):
+    return laneID[:laneID.rfind('_')]
