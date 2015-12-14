@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+  <vType accel="500.0" decel="500.0" id="gen" length="4.0" minGap="0.01" maxSpeed="40.0" sigma="0" impatience="1.0" />
+
+  <route id="W2E" edges="1i 2o"/>
+  <route id="E2W" edges="2i 1o"/>
+  <route id="S2N" edges="3i 4o"/>
+  <route id="N2S" edges="4i 3o"/>
+  <route id="S2W" edges="3i 1o"/>
+  <route id="S2E" edges="3i 2o"/>
+  <route id="W2N" edges="1i 4o"/>
+  <route id="W2S" edges="1i 3o"/>
+  <route id="E2S" edges="2i 3o"/>
+  <route id="E2N" edges="2i 4o"/>
+  <route id="N2W" edges="4i 1o"/>
+  <route id="N2E" edges="4i 2o"/>
+
+  <vehicle depart="0" id="ego" route="S2N" type="NoControlRandAccel" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="W2E" type="NoControlRandAccel" color="1,0,1" departSpeed="5.0" />
+
+</routes>

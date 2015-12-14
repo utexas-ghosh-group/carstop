@@ -9,3 +9,4 @@ from brakeControl import Braker
 from noControlRandAccel import NoControlRandAccel
 from rearEndEgo import RearEndEgo
 from rearEndBrake import RearEndBrake
+from inter1Control import Inter1Control
