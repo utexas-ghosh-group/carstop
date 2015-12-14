@@ -15,7 +15,7 @@
   <route id="N2W" edges="4i 1o"/>
   <route id="N2E" edges="4i 2o"/>
 
-  <vehicle depart="0" id="ego" route="S2N" type="NoControlRandAccel" departSpeed="5.0" />
-  <vehicle depart="0" id="alter" route="W2E" type="NoControlRandAccel" color="1,0,1" departSpeed="5.0" />
+  <vehicle depart="0" id="ego" route="S2N" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="W2E" type="gen" color="1,0,1" departSpeed="5.0" />
 
 </routes>

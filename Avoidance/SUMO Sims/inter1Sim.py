@@ -25,7 +25,7 @@ import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
 CONFIGNAME = "inter1l"
-outputName = 'intersim1'
+outputName = 'intersim_a'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -74,7 +74,7 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
     optParser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                          default=False, help="tell me what you are doing")
     optParser.add_option("-g", "--gui", action="store_true", dest="gui",
-                         default=True, help="run with GUI")
+                         default=False, help="run with GUI")
     optParser.add_option("-c", "--config", type="string", dest="CONFIGNAME",
                          default=None, help="SUMO config to use")
     optParser.add_option("--allow", action="store_true", dest="allowed",
@@ -243,7 +243,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=0
+    numiter=3
     
     if numiter == 0:
         egov = rndSpeed()
@@ -253,6 +253,6 @@ if __name__ == "__main__":
         for it in range(numiter):
             egov = rndSpeed()
             alterv = rndSpeed()
-            collide = init(it+1, egov=egov,alterv=alterv)
+            collide = init(it+1)
             params.add([[egov,alterv,collide]])
         params.write(paramFolder+"/"+outputName+".csv")
