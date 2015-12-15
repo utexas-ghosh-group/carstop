@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Contains methods to create, end, and control SUMO simulation.
-last major edit 11/17/15
-edit 12/8/15 : changed subprocess output
+last major edit 12/15/15
 """
 import subprocess, sys, os
 toolsPathName = "../../../cars/sumo/tools"
@@ -15,6 +14,7 @@ import signal
 
 _wait_in_s = 4
 import traci
+from math import radians
 
 class Sumo:
     
@@ -86,6 +86,9 @@ class Sumo:
         routeID = _edge(laneID)
         laneIndex = int( laneID[laneID.rfind('_')+1:] )
         traci.vehicle.add(vehID,routeID,pos=pos,lane=laneIndex)
+        traci._sendIntCmd(traci.constants.CMD_SET_VEHICLE_VARIABLE,
+                          traci.constants.VAR_SPEEDSETMODE, vehID, 0)
+        traci.vehicle.setLaneChangeMode(vehID, 0)
         traci.simulationStep()
         
         
@@ -174,13 +177,11 @@ class Sumo:
             traci.vehicle.setSpeed(vehID,necessarySpeed)
             for i in range(40):
                 traci.simulationStep()
-        elif lane is prevLane: # staying in same lane
+            return
+            
+        if lane is prevLane: # staying in same lane
             currPos = prevPos + dist
-            traci.vehicle.moveTo(vehID, lane, currPos)
-            traci.vehicle.setSpeed(vehID,0)
-            traci.simulationStep()
         else: # changing lanes, assume you complete old lane
-            currPos = prevPos + dist - traci.lane.getLength(prevLane)
             thisroute = traci.vehicle.getRoute(vehID)
             if not _edge(lane) in thisroute: # have to change route
                 changedRoute = False
@@ -192,9 +193,17 @@ class Sumo:
                         break
                 if not changedRoute:
                     print("failed to find route, probably crashing")
-            traci.vehicle.moveTo(vehID, lane, currPos)
-            traci.vehicle.setSpeed(vehID,0)
-            traci.simulationStep()
+            currPos = prevPos + dist - traci.lane.getLength(prevLane)
+            if currPos < 0 and dist > 0:
+                currPos = prevPos + dist
+                lane = prevLane # don't change lanes if you haven't reached next one
+        
+        if dist == 0:
+            return
+            
+        traci.vehicle.moveTo(vehID, lane, currPos)
+        traci.vehicle.setSpeed(vehID,0)
+        traci.simulationStep()
         
         
     def removeVehicle(self,vehID):
@@ -225,7 +234,7 @@ class Sumo:
         return [traci.vehicle.getLaneID(vehID),
                 traci.vehicle.getLanePosition(vehID),
                 traci.vehicle.getPosition(vehID),
-                traci.vehicle.getAngle(vehID)]
+                radians(traci.vehicle.getAngle(vehID))]
         
     def getLaneInfo(self,lane):
         """ input: laneID = string \n

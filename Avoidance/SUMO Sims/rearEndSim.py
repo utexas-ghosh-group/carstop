@@ -9,7 +9,7 @@ from random import uniform
 import collisionCheck
 from subprocess import call
 
-numiter = 10
+numiter = 1
 outputName = 'rearEnd'
 
 
@@ -116,7 +116,7 @@ while iteration <= options.numiter:
         if lanelength - max(leadLanePos, egoLanePos) < 10:
             # either vehicle is near the end of the road
             break
-        if egoLanePos - leadLanePos > 20:
+        if egoLanePos - leadLanePos > 100:
             # ego passed lead a while ago
             break
         if err > 0:
