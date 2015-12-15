@@ -25,7 +25,7 @@ import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
 CONFIGNAME = "inter1l"
-outputName = 'intersim_a'
+outputName = 'intersim_b'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -38,12 +38,11 @@ dataFromTraciSet = [tc.VAR_LENGTH, tc.VAR_WIDTH, tc.VAR_ACCEL, tc.VAR_DECEL,
                     tc.VAR_MAXSPEED]
 
 class Setting:
-    collisionAllowed = True
     verbose = False
 setting = Setting()
 
 class State:
-    collisionOccurred = False
+    collisionOccurred = -1
     step = 0
 state = State()
 
@@ -62,7 +61,8 @@ class Output:
         if restart:
             self.df = None
 output = Output(['time','vehID','x','y','angle','speed'])
-params = Output(['Ego Initial Speed','Alter Initial Speed','Collision Time'])
+params = Output(['Ego Initial Speed','Alter Initial Speed','Collision Time',
+                 'Colliding Vehicle'])
 
 vehicleSetParams = {}
 controllers = {}
@@ -77,11 +77,8 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
                          default=False, help="run with GUI")
     optParser.add_option("-c", "--config", type="string", dest="CONFIGNAME",
                          default=None, help="SUMO config to use")
-    optParser.add_option("--allow", action="store_true", dest="allowed",
-                         default=True, help="insert to ignore collisions")
     (options, args) = optParser.parse_args()
     setting.verbose = options.verbose
-    setting.collisionAllowed = options.allowed
     
     completeCommand = [SUMO]
     if options.gui:
@@ -104,13 +101,13 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
         while takeNextStep():
             doStep()
     finally:
-        if not state.collisionOccurred:        
-            print "made it to the end without a collision"
+        #if state.collisionOccurred < 0:        
+        #    print "made it to the end without a collision"
         traci.close()
         sumoProcess.wait()
         if iteration > 0:
             respondWithCollision = state.collisionOccurred
-            state.collisionOccurred = False
+            state.collisionOccurred = -1
             state.step = 0
             output.write(outputFolder+'/'+outputName+str(iteration)+'.csv',
                          restart=True)
@@ -120,7 +117,7 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
 def takeNextStep():
     result = state.step < MAXSTEPS
     result &= traci.simulation.getMinExpectedNumber() > 0    
-    result &= setting.collisionAllowed or not state.collisionOccurred
+    result &= state.collisionOccurred - state.step <= 3 # 3 seconds after collision
     return result
 
 
@@ -138,19 +135,6 @@ def getFromSubscription(vehID, subs, varNames):
         else:
             data.append(subs[varName])
     return data
-    
-    
-def getController(vehID, params = None):
-    # The vehicle type names in the .rou file determine the control type
-    # npc = use default SUMO motion
-    # be careful to spell name correctly!
-    vtype = traci.vehicle.getTypeID(vehID)
-    if "@" in vtype:   # name is altered if you change any params...
-        vtype = vtype[0:vtype.index("@")]
-    DeltaT = traci.simulation.getDeltaT() / 1000.0
-    if vtype == "npc":
-        return None
-    return eval("Controllers."+vtype+"(vehID, params, DeltaT)")
 
 
 def getSetParams(vehID):
@@ -205,7 +189,7 @@ def doStep():
                 # check for collisions
                 if collisionCheck.check(vState, otherState):
                     print "collision! pos",vState.x,vState.y,"step",state.step
-                    state.collisionOccurred = True
+                    state.collisionOccurred = state.step*.1
                     break
                 #
                 # update sensor
@@ -243,7 +227,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=3
+    numiter=100
     
     if numiter == 0:
         egov = rndSpeed()
@@ -254,5 +238,5 @@ if __name__ == "__main__":
             egov = rndSpeed()
             alterv = rndSpeed()
             collide = init(it+1)
-            params.add([[egov,alterv,collide]])
-        params.write(paramFolder+"/"+outputName+".csv")
+            params.add([[egov,alterv,collide, 'alter']])
+        params.write(paramFolder+"/"+outputName+"_param.csv")

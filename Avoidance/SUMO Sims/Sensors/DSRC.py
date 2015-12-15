@@ -20,12 +20,12 @@ class DSRC():
         self.realign = realign
     
     def addObstacle(self,vstate):
-        maxCommunicationRange = 600   # meters
+        maxCommunicationRange = 500   # meters
         packetLossRate = 0 # fraction of messages lost    
         
         # model all sensor errors as Gaussian
-        positionErrorSD = .5   # meters
-        speedErrorSD = .25  # meters/second
+        positionErrorSD = 1.   # meters
+        speedErrorSD = .5  # meters/second
         #accelErrorSD = .1      # meters/second^2
         # not sending acceleration atm... will take some effort to include        
         

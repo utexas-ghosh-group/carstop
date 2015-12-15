@@ -9,7 +9,7 @@ from random import uniform
 import collisionCheck
 from subprocess import call
 
-numiter = 200
+numiter = 10
 outputName = 'rearEnd'
 
 
@@ -81,16 +81,16 @@ while iteration <= options.numiter:
     ## run simulation
     while ttime < maxTime:
         # get info on this step
-        aa,egoLanePos,egoPos = Sim.getVehicleState('ego')
-        aa,leadLanePos,leadPos = Sim.getVehicleState('lead')
+        aa,egoLanePos,egoPos,egoAngle = Sim.getVehicleState('ego')
+        aa,leadLanePos,leadPos,leadAngle = Sim.getVehicleState('lead')
         egoControl.update(DELTAT)
         leadControl.update(DELTAT)
         egoSpeed = egoControl.nextStep()
         leadSpeed = leadControl.nextStep()
         
         # save
-        egoState = [ttime, 'ego', egoPos[0], egoPos[1], 90., egoSpeed]
-        leadState = [ttime, 'lead', leadPos[0], leadPos[1], 90., leadSpeed]
+        egoState = [ttime, 'ego', egoPos[0], egoPos[1], egoAngle, egoSpeed]
+        leadState = [ttime, 'lead', leadPos[0], leadPos[1], leadAngle, leadSpeed]
         if output is None:
             output = pd.DataFrame([egoState, leadState])
         else:

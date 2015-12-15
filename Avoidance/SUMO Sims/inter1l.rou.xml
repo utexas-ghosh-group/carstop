@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <routes>
-  <vType accel="500.0" decel="500.0" id="gen" length="4.0" minGap="0.01" maxSpeed="40.0" sigma="0" impatience="1.0" />
+  <vType accel="500.0" decel="500.0" id="gen" length="5.0" width="2.0" minGap="0.01" maxSpeed="50.0" sigma="0" impatience="1.0" />
 
   <route id="W2E" edges="1i 2o"/>
   <route id="E2W" edges="2i 1o"/>
@@ -15,7 +15,7 @@
   <route id="N2W" edges="4i 1o"/>
   <route id="N2E" edges="4i 2o"/>
 
-  <vehicle depart="0" id="ego" route="S2N" type="gen" departSpeed="5.0" />
-  <vehicle depart="0" id="alter" route="W2E" type="gen" color="1,0,1" departSpeed="5.0" />
+  <vehicle depart="0" id="ego" route="S2W" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="N2S" type="gen" color="1,0,1" departSpeed="5.0" />
 
 </routes>

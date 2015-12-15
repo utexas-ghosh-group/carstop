@@ -10,7 +10,7 @@ import pandas as pd
 def GenericNoisePredict(sensedV, predictTimes, *args):
     trueV = args[0]
     
-    error = .5    # meters
+    error = .01    # meters
     
     resultV = trueV[trueV['time']<0].copy() # empty copy
     times = trueV['time'].tolist()

@@ -89,6 +89,53 @@ class Sumo:
         traci.simulationStep()
         
         
+    def moveVehicle(self, vehID, lane,pos=0.):
+        """ inputs:
+            vehID = string \n
+            lane = string, lane to switch to \n
+            pos = numeric, distance along lane
+            
+            knowing when it's appropriate to switch roads is up to the
+            user for now
+        """
+        signal.signal(signal.SIGALRM, _timeOutHandler)
+        signal.alarm(_wait_in_s)
+        try:
+            self._moveVehicle(vehID, lane, pos)
+        except Exception, exc:
+            print exc
+            signal.alarm(_wait_in_s)
+            try:
+                 self._moveVehicle(vehID, lane, pos)
+            except Exception, exc:
+                print exc
+                print "  quitting on instruction move "+vehID+" "+lane
+                self.end()
+                return 1 # sim has failed
+        signal.alarm(0)
+        return 0
+        
+    def _moveVehicle(self,vehID, lane, pos):
+        prevLane = traci.vehicle.getLaneID(vehID)
+        
+        if lane is not prevLane:
+            thisroute = traci.vehicle.getRoute(vehID)
+            if not _edge(lane) in thisroute: # have to change route
+                changedRoute = False
+                for r in traci.route.getIDList():
+                    redges = traci.route.getEdges(r)
+                    if _edge(prevLane) in redges and _edge(lane) in redges:
+                        traci.vehicle.setRouteID(vehID, r)
+                        changedRoute=True
+                        break
+                if not changedRoute:
+                    print("failed to find route, probably crashing")
+        
+        traci.vehicle.moveTo(vehID, lane, pos)
+        traci.vehicle.setSpeed(vehID,0)
+        traci.simulationStep()
+        
+        
     def moveVehicleAlong(self, vehID, dist, lane=None):
         """ inputs:
             vehID = string \n
@@ -122,10 +169,18 @@ class Sumo:
         if lane is None: # assume you can remain on current lane
             lane = prevLane           
             
-        if lane is prevLane: # staying in same lane
+        if lane[0]==':': #intersection, can't select lane because SUMO is dumb
+            necessarySpeed=dist/4.
+            traci.vehicle.setSpeed(vehID,necessarySpeed)
+            for i in range(40):
+                traci.simulationStep()
+        elif lane is prevLane: # staying in same lane
             currPos = prevPos + dist
+            traci.vehicle.moveTo(vehID, lane, currPos)
+            traci.vehicle.setSpeed(vehID,0)
+            traci.simulationStep()
         else: # changing lanes, assume you complete old lane
-            currPos = prevPos + dist - traci.lane.getLength(lane)
+            currPos = prevPos + dist - traci.lane.getLength(prevLane)
             thisroute = traci.vehicle.getRoute(vehID)
             if not _edge(lane) in thisroute: # have to change route
                 changedRoute = False
@@ -137,10 +192,9 @@ class Sumo:
                         break
                 if not changedRoute:
                     print("failed to find route, probably crashing")
-        
-        traci.vehicle.moveTo(vehID, lane, currPos)
-        traci.vehicle.setSpeed(vehID,0)
-        traci.simulationStep()
+            traci.vehicle.moveTo(vehID, lane, currPos)
+            traci.vehicle.setSpeed(vehID,0)
+            traci.simulationStep()
         
         
     def removeVehicle(self,vehID):
@@ -208,6 +262,9 @@ class Sumo:
             thisCsvFile = "./Results/" + self.outFile + ".csv"
             os.system("python " + toolsPathName + "/xml/xml2csv.py " +
                         thisSumoOutFile + " --output " + thisCsvFile)
+                        
+    def route(self,vehID):
+        return traci.vehicle.getRoute(vehID)
 
             
 def _timeOutHandler(signum, frame):
