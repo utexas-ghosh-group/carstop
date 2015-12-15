@@ -6,3 +6,4 @@ last modified 11/10/15
 from rearEndPredict import RearEndPredict
 from genericNoisePredict import GenericNoisePredict
 from kalmanPredict import KalmanPredict
+from gpmlPredict import GpmlPredict

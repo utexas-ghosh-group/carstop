@@ -9,12 +9,15 @@ designed to predict a rearEndBrake controlled vehicle
 
 import numpy as np
 import pandas as pd
-from filterpy.kalman import KalmanFilter as KF
+#from filterpy.kalman import KalmanFilter as KF
 from filterpy.kalman import UnscentedKalmanFilter as UKF  
 from filterpy.kalman import MerweScaledSigmaPoints as SigmaPoints
 import copy
 
-def initKalman(n_state, n_meas, dt):
+def initPredictor(*args):
+    n_state = args[0]
+    n_meas = args[1]
+    dt = args[2]
     sigmas = SigmaPoints(n_state, alpha=.1, beta=2., kappa=1.)
     ukf = UKF(dim_x=n_state, dim_z=n_meas, fx=f_kal, hx=h_kal, dt=dt, points=sigmas)
     ukf.Q = 0.1*np.eye(n_state)
@@ -36,8 +39,8 @@ def f_kal(state, dt):
     r = state[3]
     
     fstate = state[:]
-    fstate[0] = x + dt*v*np.sin(r*np.pi/float(180))
-    fstate[1] = y + dt*v*np.cos(r*np.pi/float(180))
+    fstate[0] = x + dt*v*np.sin(r)
+    fstate[1] = y + dt*v*np.cos(r)
     
     return fstate
 
@@ -48,7 +51,7 @@ def h_kal(state):
 def KalmanPredict(vData,predictTimes, *args):
     ukf = args[0]
     isFirst = args[1]
-    timeNext = args[2]
+    timeNext = args[2] # One step ahead time
     
     currState = vData.iloc[vData.shape[0]-1] # Current state (last data)
     if not isFirst: # Not first state -> need MAIN update process

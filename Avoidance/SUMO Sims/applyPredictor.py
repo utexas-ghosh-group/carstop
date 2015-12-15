@@ -22,12 +22,22 @@ nsims = 30
 egoID = 'ego'
 minPredict = 3 # seconds
 maxPredict = 5 # seconds
-#trajectoryPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for other vehicle
-#egoPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for ego vehicle
+
+# Choose predictor here !!!!!!
+predictorChoose = 1 # 1: UKF, 2: GP
+
+if predictorChoose == 1:
+    trajectoryPredictor = Predictors.KalmanPredict # Trajectory Predictor
+    initPred = Predictors.kalmanPredict.initPredictor
+elif predictorChoose == 2:
+    trajectoryPredictor = Predictors.GpmlPredict # Trajectory Predictor
+    initPred = Predictors.gpmlPredict.initPredictor
+else:
+    trajectoryPredictor = Predictors.GenericNoisePredict # Trajectory Predictor=
+
 #trajectoryPredictor = Predictors.RearEndPredict # Trajectory Predictor for other vehicle
-#egoPredictor = Predictors.RearEndPredict # Trajectory Predictor for ego vehicle
-trajectoryPredictor = Predictors.KalmanPredict # Trajectory Predictor for other vehicle
-egoPredictor = Predictors.KalmanPredict # Trajectory Predictor for ego vehicle
+#egoPredictor = Predictors.RearEndPredict # Trajectory Predictor for ego vehicle    
+
 VEHsize = (5.,2.)
 
 # Input arguments for Predictor function
@@ -65,6 +75,12 @@ for simIndex in range(nsims):
     vehicleData['width'] = pd.Series(VEHsize[1], index=vehicleData.index)  
     
     sensorData = pd.read_table(sensorFile,sep=",")
+    try:
+        sensorData = pd.read_table(sensorFile,sep=",")
+    except ValueError: # empty file
+        pred += [-1]
+        predVehID += ['']
+        continue
     sensorData['length'] = pd.Series(VEHsize[0], index=sensorData.index)
     sensorData['width'] = pd.Series(VEHsize[1], index=sensorData.index)
     
@@ -102,13 +118,22 @@ for simIndex in range(nsims):
     predictedCollisionVehID = egoID
     
     otherIDs_all = np.unique(sensorData['vehID']).tolist()
-    ukf_others = [None]*len(otherIDs_all)
     tStart_others = np.zeros(len(otherIDs_all)) # first time vehicle recoreded
-    # Initialize Kalman Filters
-    ukf_ego = Predictors.kalmanPredict.initKalman(n_state, n_meas,0.1)
+
+    # Initialize Predictors (Kalman, GP)
+    if predictorChoose == 1:
+        pred_ego = Predictors.kalmanPredict.initPredictor(n_state, n_meas,0.1)
+        pred_others = [None]*len(otherIDs_all)
+    elif predictorChoose == 2:
+        pred_egoX, pred_egoY = Predictors.gpmlPredict.initPredictor(2,0.1,0.001,1.0)
+        pred_othersX = [None]*len(otherIDs_all)
+        pred_othersY = [None]*len(otherIDs_all)
     tStart_ego = vehicleData[vehicleData['vehID']==egoID]['time'].iloc[0]
     for iv in range(len(otherIDs_all)):
-        ukf_others[iv] = Predictors.kalmanPredict.initKalman(n_state, n_meas,0.1)
+        if predictorChoose == 1:
+            pred_others[iv] = Predictors.kalmanPredict.initPredictor(n_state, n_meas,0.1)
+        elif predictorChoose == 2:
+            pred_othersX[iv], pred_othersY[iv] = Predictors.gpmlPredict.initPredictor(2,0.1,0.001,1.0)
         tStart_others[iv] = vehicleData[vehicleData['vehID']==otherIDs_all[iv]]['time'].iloc[0]
     
     # Save ego vehicle's true data for all time steps
@@ -119,11 +144,11 @@ for simIndex in range(nsims):
         if predictedCollision >= 0:
             break # Save only first predicted collision
         # load data until current time
-#        currSensorData = sensorData[sensorData['time'] <= time]
-#        egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] <= time]
+        currSensorData = sensorData[sensorData['time'] <= time]
+        egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] <= time]
         # Load current time data
-        currSensorData = sensorData[sensorData['time'] == time]
-        egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] == time]
+#        currSensorData = sensorData[sensorData['time'] == time]
+#        egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] == time]
         # rearrange sensor data into dict with names
         allVehicles = {} # All vehicle data for sensored vehicle
         allSensors = {} # All sensored data until current time
@@ -143,16 +168,31 @@ for simIndex in range(nsims):
 #                                    egoVehicleTrue) # genericNoisePredict
         if time < timeList[len(timeList)-1]:
             timeNext = timeList[timeList.index(time)+1] # Next time step
+            
         if time == tStart_ego: # first time step (no previoius info)
-            ukf_ego.x[0] = egoVehicle.x
-            ukf_ego.x[1] = egoVehicle.y
-            ukf_ego.x[2] = egoVehicle.speed
-            ukf_ego.x[3] = egoVehicle.angle
-            egoPredicted = egoPredictor(egoVehicle, predictTimes,
-                                    ukf_ego, True, timeNext) # kalmanPredict
+            if predictorChoose == 1:
+                pred_ego.x[0] = egoVehicle.iloc[np.shape(egoVehicle)[0]-1].x
+                pred_ego.x[1] = egoVehicle.iloc[np.shape(egoVehicle)[0]-1].y
+                pred_ego.x[2] = egoVehicle.iloc[np.shape(egoVehicle)[0]-1].speed
+                pred_ego.x[3] = egoVehicle.iloc[np.shape(egoVehicle)[0]-1].angle
+                egoPredicted = trajectoryPredictor(egoVehicle, predictTimes,
+                                                   pred_ego, True, timeNext) # kalmanPredict
+            elif predictorChoose == 2:
+                egoPredicted = trajectoryPredictor(egoVehicle, predictTimes,
+                                                   pred_egoX, pred_egoY, True, timeNext) # gpmlPredict
+            else:
+                egoPredicted = egoPredicted = trajectoryPredictor(egoVehicle, predictTimes,
+                                                                  egoVehicleTrue) # genericNoisePredict
         else:
-            egoPredicted = egoPredictor(egoVehicle, predictTimes,
-                                    ukf_ego, False, timeNext) # kalmanPredict
+            if predictorChoose == 1:
+                egoPredicted = trajectoryPredictor(egoVehicle, predictTimes,
+                                                   pred_ego, False, timeNext) # kalmanPredict
+            elif predictorChoose == 2:
+                egoPredicted = trajectoryPredictor(egoVehicle, predictTimes,
+                                                   pred_egoX, pred_egoY, False, timeNext) # gpmlPredict
+            else:
+                egoPredicted = egoPredicted = trajectoryPredictor(egoVehicle, predictTimes,
+                                                                  egoVehicleTrue) # genericNoisePredict
                 
         # for each other vehicle, predict path  
         for vehID in otherIDs:
@@ -160,15 +200,29 @@ for simIndex in range(nsims):
 #            predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes, 
 #                                                allVehicles[vehID]) # genericNoisePredict
             if time == tStart_others[iv]: # first time step (no previoius info)
-                ukf_others[iv].x[0] = allSensors[vehID].x
-                ukf_others[iv].x[1] = allSensors[vehID].y
-                ukf_others[iv].x[2] = allSensors[vehID].speed
-                ukf_others[iv].x[3] = allSensors[vehID].angle
-                predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes,
-                                                ukf_others[iv], True, timeNext) # kalmanPredict
+                if predictorChoose == 1:
+                    pred_others[iv].x[0] = allSensors[vehID].iloc[np.shape(allSensors[vehID])[0]-1].x
+                    pred_others[iv].x[1] = allSensors[vehID].iloc[np.shape(allSensors[vehID])[0]-1].y
+                    pred_others[iv].x[2] = allSensors[vehID].iloc[np.shape(allSensors[vehID])[0]-1].speed
+                    pred_others[iv].x[3] = allSensors[vehID].iloc[np.shape(allSensors[vehID])[0]-1].angle
+                    predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes,
+                                                        pred_others[iv], True, timeNext) # kalmanPredict
+                elif predictorChoose == 2:
+                    predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes,
+                                                       pred_othersX[iv], pred_othersY[iv], True, timeNext) # gpmlPredict
+                else:
+                    predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes, 
+                                                        allVehicles[vehID]) # genericNoisePredict
             else:
-                predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes,
-                                                ukf_others[iv], False, timeNext) # kalmanPredict         
+                if predictorChoose == 1:
+                    predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes,
+                                                        pred_others[iv], False, timeNext) # kalmanPredict
+                elif predictorChoose == 2:
+                    predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes,
+                                                       pred_othersX[iv], pred_othersY[iv], False, timeNext) # gpmlPredict
+                else:
+                    predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes, 
+                                                        allVehicles[vehID]) # genericNoisePredict
             # check for collision
             for prediction in range(len(predictTimes)):
                 thisEgo = egoPredicted.iloc[prediction]
