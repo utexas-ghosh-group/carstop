@@ -74,7 +74,7 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
     optParser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                          default=False, help="tell me what you are doing")
     optParser.add_option("-g", "--gui", action="store_true", dest="gui",
-                         default=False, help="run with GUI")
+                         default=True, help="run with GUI")
     optParser.add_option("-c", "--config", type="string", dest="CONFIGNAME",
                          default=None, help="SUMO config to use")
     (options, args) = optParser.parse_args()
@@ -227,7 +227,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=100
+    numiter=1
     
     if numiter == 0:
         egov = rndSpeed()
