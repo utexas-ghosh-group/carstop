@@ -13,7 +13,6 @@ vehicleFolder = os.path.realpath("Results")
 sensorFolder = os.path.realpath("Sensor Results")
 outputFolder = os.path.realpath("Analysis")
 paramFolder = os.path.realpath("Parameters")
-simName = "rearEnd"
 
 
 # parameters to change:
