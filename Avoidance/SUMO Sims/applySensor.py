@@ -18,8 +18,10 @@ outputFolder = os.path.realpath("Sensor Results")
 
 
 simName = "rearEnd"
-nsims = 50
+#simName = "intersim_b"
+nsims = 30
 sensorToUse = Sensors.DSRC
+#sensorToUse = Sensors.FrontRadar
 vehicleIDtoSeek = 'ego'
 
 
