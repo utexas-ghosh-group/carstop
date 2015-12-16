@@ -13,7 +13,8 @@ Based off of:
 import os, sys
 
 ''' put your SUMO tools directory here '''
-toolsPathName = "../../../cars/sumo/tools"
+#toolsPathName = "../../../cars/sumo/tools"
+toolsPathName = "/Users/twankim/carstop/sumo-0.24.0/tools"
 sys.path.append(os.path.realpath(toolsPathName))
 
 
