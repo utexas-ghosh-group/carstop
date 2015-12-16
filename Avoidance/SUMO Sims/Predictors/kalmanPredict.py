@@ -40,7 +40,7 @@ def f_kal(state, dt):
     
     fstate = state[:]
     fstate[0] = x + dt*v*np.sin(r)
-    fstate[1] = y + dt*v*np.cos(r)
+    fstate[1] = y - dt*v*np.cos(r)
     
     return fstate
 

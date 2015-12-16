@@ -16,14 +16,18 @@ paramFolder = os.path.realpath("Parameters")
 
 
 # parameters to change:
-simName = "rearEnd"
+#simName = "rearEnd"
+simName = "intersim_b"
 nsims = 30
 egoID = 'ego'
-minPredict = 3 # seconds
-maxPredict = 5 # seconds
+otherID = 'alter'
+#otherID = 'lead'
+minPredict = 1 # seconds
+maxPredict = 3 # seconds
+# Also need to change truthVehID based on simulation type!!!!!!!! 
 
 # Choose predictor here !!!!!!
-predictorChoose = 1 # 1: UKF, 2: GP
+predictorChoose = 2 # 1: UKF, 2: GP
 
 if predictorChoose == 1:
     trajectoryPredictor = Predictors.KalmanPredict # Trajectory Predictor
@@ -48,7 +52,8 @@ paramFile = paramFolder+ "/" + simName + "_param.csv"
 paramTruth = pd.read_csv(paramFile)
 
 truth = paramTruth["Collision Time"].tolist()
-truthVehID = ['lead']*len(truth) # Crashed vehicle's ID for corresponding time (temporary setting)
+#truthVehID = [otherID]*len(truth) # Crashed vehicle's ID for corresponding time (temporary setting)
+truthVehID = paramTruth['Colliding Vehicle'].tolist()
 pred = [] # predicted collision time
 predVehID = [] # predicted collision vehicle's ID
 
@@ -73,12 +78,12 @@ for simIndex in range(nsims):
     vehicleData['length'] = pd.Series(VEHsize[0], index=vehicleData.index)
     vehicleData['width'] = pd.Series(VEHsize[1], index=vehicleData.index)  
     
-    sensorData = pd.read_table(sensorFile,sep=",")
     try:
         sensorData = pd.read_table(sensorFile,sep=",")
     except ValueError: # empty file
         pred += [-1]
         predVehID += ['']
+        print "!!!!!!!!!!!Error in reading SensorData file!!!!!!!!!!!!!!"
         continue
     sensorData['length'] = pd.Series(VEHsize[0], index=sensorData.index)
     sensorData['width'] = pd.Series(VEHsize[1], index=sensorData.index)
@@ -241,7 +246,7 @@ for simIndex in range(nsims):
 nTP = 0.0
 nT = 0.0
 nP = 0.0
-tolerance = .5
+tolerance = 0.5
 for sim in range(nsims):
     trueCollision = truth[sim]
     trueVehID = truthVehID[sim]
