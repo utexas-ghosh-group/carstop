@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sumoMethods import Sumo
+from sumoMethodsWindows import Sumo
 import pandas as pd
 import numpy as np
 #import os
@@ -27,6 +27,8 @@ intersectionLookUp = [['1i_0','3o_0',':0_12_0'] , ['1i_0','2o_0',':0_13_0'] ,
                       ['3i_0','4o_1',':0_9_1'] , ['3i_1','1o_1',':0_11_0'] ,
                       ['4i_0','1o_0',':0_0_0'] , ['4i_0','3o_0',':0_1_0'] ,
                       ['4i_0','3o_1',':0_1_1'] , ['4i_1','2o_1',':0_3_0'] ]
+
+intersectionInfo = pd.read_csv('inter2collisions.csv',header=0)
 
 def splitRoad(lane):
     if lane[0]==':': # internal lane for intersection
@@ -81,6 +83,7 @@ while iteration <= numiter and err == 0:
     cars['x'] = [-1]*ncars
     cars['y'] = [-1]*ncars
     cars['angle'] = [-1]*ncars
+    cars['ilane'] = ['']*ncars
     ttime = 0
     maxTime = 100 # seconds
     
@@ -98,13 +101,19 @@ while iteration <= numiter and err == 0:
         # gather vehicle info
         for carID in np.where(cars['status']==0)[0]:        
             carLane,carLanePos,carPos,carAngle = Sim.getVehicleState(str(carID))
-            if carLane[2] == 'o':
+            if carLane[1] == 'o':
                 cars['status'] = 1
             cars['lane'].iloc[carID] = carLane
             cars['lanepos'].iloc[carID] = carLanePos
             cars['x'].iloc[carID] = carPos[0]
             cars['y'].iloc[carID] = carPos[1]
             cars['angle'].iloc[carID] = carAngle
+            if carLane[1] == 'i': # not in intersection yet
+                cars['ilane'].iloc[carID] = next((k for i,j,k in
+                                intersectionLookUp if i==carLane and 
+                                j==cars['dest'].iloc[carID]))
+            else:
+                cars['ilane'].iloc[carID] = carLane
         
         # check for collisions
         activeCars = np.where(cars['status']==0)[0]
@@ -122,6 +131,31 @@ while iteration <= numiter and err == 0:
                     cars['status'].iloc[carID] = 2
                     cars['status'].iloc[altID] = 2  
         
+        
+        # gather when the vehicles reach potential collision points
+        trajectories = {}
+        for carID in np.where(cars['status']==0)[0]:
+            car = cars.iloc[carID]
+            route,grade,ln = splitRoad(car['lane'])
+            
+            if grade=='i': # not in intersection yet
+                initDist = car['lanepos'] - Sim.getLaneInfo(car['lane'])[0]
+            else:
+                initDist = car['lanepos']
+            
+            trajectory = []
+            for crossIndex in range(intersectionInfo.shape[0]):
+                thisCross = intersectionInfo.iloc[crossIndex]
+                if thisCross['lane'] == car['ilane']:
+                    timeToCrossingStart = (thisCross['begin_lp'] - 
+                                            initDist) / car['speed']
+                    timeToCrossingEnd = (thisCross['end_lp'] - 
+                                            initDist) / car['speed']
+                    trajectory += [[thisCross['lane2'],
+                                    timeToCrossingStart, timeToCrossingEnd]]
+            trajectories[carID] = trajectory
+         
+         
         # update everything
         for carID in np.where(cars['status']==0)[0]:
             car = cars.iloc[carID]
@@ -163,7 +197,7 @@ while iteration <= numiter and err == 0:
                 timeToLookAhead = 1.
                 carUpdate['Adjacent Lane Free'] = 1 + ln
                 adjlane = makeRoad(route,'i',1 - ln)
-                searchAdjacent = (cars['status']==0)*(cars['lane']==adjlane)>0
+                searchAdjacent = (cars['status']==0)&(cars['lane']==adjlane)
                 for otherCarID in np.where(searchAdjacent)[0]:
                     alt = cars.iloc[otherCarID]
                     carpositions = (np.arange(0,timeToLookAhead,DELTAT) *
@@ -173,10 +207,19 @@ while iteration <= numiter and err == 0:
                     if np.any(np.abs(altpositions - carpositions) <= 5.):
                         carUpdate['Adjacent Lane Free'] = 0
             # closeness of nearest vehicle - not complete        
-            #nearestTTC = []
-            #for otherCarID in np.where((cars['status']==0)*
-            #                    (cars['lane']==adjlane)>0)[0]:
-            carUpdate['Time to Nearest Vehicle'] = -1
+            ttC = 100
+            for crossing in trajectories[carID]: 
+                altRoad, beginTime, endTime = crossing
+                collideVehicles = (cars['status']==0)
+                collideVehicles = collideVehicles*(cars['ilane']==altRoad) > 0
+                for altcar in np.where(collideVehicles)[0]:
+                    for altcrossing in trajectories[altcar].shape[0]:
+                        origRoad,altbeginTime,altendTime = trajectories[altcar][altcrossing]
+                        if origRoad == car['ilane']:
+                            if endTime > altbeginTime or altendTime > beginTime:
+                                ttC = min(ttC, beginTime)
+            carUpdate['Time to Nearest Vehicle'] = ttC
+            #carUpdate['Time to Nearest Vehicle'] = -1
             # info on ahead vehicle
             carUpdate['Next To Intersection'] = False
             aheadVehicles = (cars['status']==0)*(cars['lane']==car['lane'])>0
