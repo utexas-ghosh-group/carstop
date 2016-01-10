@@ -1,16 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Main file for running SUMO simulations with Python input.
-Currently controls vehicle speed only.
-last modified 6/28/15
-
-Based off of:
-@file    vehicleControl.py
-@author  Michael Behrisch
-@author  Daniel Krajzewicz
-@author  Lena Kalleske
-@date    2008-07-21
-@version $Id: vehicleControl.py 16253 2014-04-25 12:09:01Z behrisch $
+last modified 1/6/16
 """
 import subprocess, sys, os, math
 import pandas as pd
@@ -83,9 +73,9 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
     completeCommand = [SUMO]
     if options.gui:
         completeCommand = [SUMOGUI]
-    sumoConfig = "%s.sumocfg" % (defaultCONFIGNAME)
+    sumoConfig = defaultCONFIGNAME + "/" + defaultCONFIGNAME + ".sumocfg"
     if options.CONFIGNAME is not None:
-        sumoConfig = "%s.sumocfg" % (options.CONFIGNAME)
+        sumoConfig = options.CONFIGNAME+"/"+options.CONFIGNAME+".sumocfg"
     completeCommand += ["-c", sumoConfig] 
     if randomizerToUse is None:  # more subtle randomness still in progress
         completeCommand += ["--random"]
@@ -188,7 +178,7 @@ def doStep():
                 #
                 # check for collisions
                 if collisionCheck.check(vState, otherState):
-                    print "collision! pos",vState.x,vState.y,"step",state.step
+                    #print "collision! pos",vState.x,vState.y,"step",state.step
                     state.collisionOccurred = state.step*.1
                     break
                 #

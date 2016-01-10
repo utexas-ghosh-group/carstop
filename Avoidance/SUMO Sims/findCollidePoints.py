@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from sumoMethodsWindows import Sumo
+from sumoMethods import Sumo
 import pandas as pd
 #import numpy as np
 import collisionCheck
 import time
 
 VEHsize = (5.,2.) # meters, length by width
-configuration = 'emptyInter2l'
+configuration = 'Qsim'
 roadOrder = [1,3,2,4,1,3,2] # counterclockwise
 
 
@@ -95,4 +95,5 @@ for an in range(len(intersectionLookUp)):
         if aend > 0 and not starta==startb: # ignore cars from same lane
             collisions.add([[roada,roadb,abegin,aend],[roadb,roada,bbegin,bend]])
         
-collisions.out().to_csv('inter2collisions.csv',sep=",",header=True,index=False)
+collisions.out().to_csv('Qsim/inter2collisions.csv', sep=",",
+                header=True, index=False)

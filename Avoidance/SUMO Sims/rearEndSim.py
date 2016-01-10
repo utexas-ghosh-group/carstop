@@ -10,14 +10,14 @@ import collisionCheck
 from subprocess import call
 
 numiter = 1
-outputName = 'rearEnd'
+outputName = 'test'
 
 
 VEHsize = (5,2) # meters, length by width
 DELTAT = .1
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
-configuration = 'emptyhighway'
+configuration = 'rearEnd'
     
 def vehicleSpeed():
     return uniform(55,85)*.447

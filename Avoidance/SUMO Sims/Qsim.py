@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sumoMethodsWindows import Sumo
+from sumoMethods import Sumo
 import pandas as pd
 import numpy as np
 #import os
@@ -12,7 +12,7 @@ numiter = 0
 
 VEHsize = (5,2) # meters, length by width
 DELTAT = .1
-configuration = 'emptyInter2l'
+configuration = 'Qsim'
 MS2KPH = 3.6
 roadOrder = [1,3,2,4,1,3,2] # counterclockwise
 
@@ -28,7 +28,7 @@ intersectionLookUp = [['1i_0','3o_0',':0_12_0'] , ['1i_0','2o_0',':0_13_0'] ,
                       ['4i_0','1o_0',':0_0_0'] , ['4i_0','3o_0',':0_1_0'] ,
                       ['4i_0','3o_1',':0_1_1'] , ['4i_1','2o_1',':0_3_0'] ]
 
-intersectionInfo = pd.read_csv('inter2collisions.csv',header=0)
+intersectionInfo = pd.read_csv('Qsim/inter2collisions.csv',header=0)
 
 def splitRoad(lane):
     if lane[0]==':': # internal lane for intersection

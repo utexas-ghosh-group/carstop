@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Contains methods to create, end, and control SUMO simulation.
-last major edit 12/15/15
+last major edit 12/21/15
 """
 import subprocess, sys, os
-toolsPathName = "../../../sumo21/tools"
+#toolsPathName = "../../../sumo21/tools"
 #toolsPathName = "/Users/twankim/carstop/sumo-0.24.0/tools"
+toolsPathName = "../../../cars/sumo/tools"
 #binPathName = "../../../cars/sumo/bin"
 sys.path.append(os.path.realpath(toolsPathName))
 #sys.path.append(os.path.realpath(binPathName))
@@ -37,7 +38,7 @@ class Sumo:
         completeCommand = [checkBinary("sumo")]
         if gui:
             completeCommand = [checkBinary("sumo-gui")]
-        sumoConfig = "%s.sumocfg" % (configFile)
+        sumoConfig = configFile + "/" + configFile + ".sumocfg"
         completeCommand += ["-c", sumoConfig]
         completeCommand += ["--remote-port",str(PORT)]
         if outFile is not None:

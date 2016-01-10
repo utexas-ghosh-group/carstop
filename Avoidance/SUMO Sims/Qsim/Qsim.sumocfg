@@ -3,7 +3,7 @@
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.sf.net/xsd/sumoConfiguration.xsd">
 
     <input>
-        <net-file value="./Networks/inter2l.net.xml"/>
+        <net-file value="inter2l.net.xml"/>
         <route-files value="emptyInter2l.rou.xml"/>
 	<remote-port value="8800"/>
     </input>
