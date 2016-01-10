@@ -3,14 +3,7 @@
 Contains methods to create, end, and control SUMO simulation.
 last major edit 12/21/15
 """
-import subprocess, sys, os
-#toolsPathName = "../../../sumo21/tools"
-#toolsPathName = "/Users/twankim/carstop/sumo-0.24.0/tools"
-toolsPathName = "../../../cars/sumo/tools"
-#binPathName = "../../../cars/sumo/bin"
-sys.path.append(os.path.realpath(toolsPathName))
-#sys.path.append(os.path.realpath(binPathName))
-# above line is necessary if you can't fully install sumo
+import subprocess, sys, os, toolsPath
 
 import traci
 from math import radians

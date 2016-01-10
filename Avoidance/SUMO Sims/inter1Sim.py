@@ -2,12 +2,13 @@
 """
 last modified 1/6/16
 """
-import subprocess, sys, os, math
+import subprocess, os, math
 import pandas as pd
 from random import uniform
 from optparse import OptionParser
 
-from constants import * # sys.path is modified here
+#from constants import * # sys.path is modified here
+import toolsPath
 import collisionCheck, Sensors, Controllers
 
 import traci
