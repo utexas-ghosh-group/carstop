@@ -91,8 +91,8 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
         completeCommand += ["--random"]
     
     ## start SUMO
-    sumoProcess = subprocess.Popen(completeCommand, stdout=sys.stdout,
-                                    stderr=sys.stderr)
+    sumoProcess = subprocess.Popen(completeCommand, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
     traci.init(PORT, 4)
     traci.simulation.subscribe()
 
@@ -227,7 +227,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=1
+    numiter=0
     
     if numiter == 0:
         egov = rndSpeed()
