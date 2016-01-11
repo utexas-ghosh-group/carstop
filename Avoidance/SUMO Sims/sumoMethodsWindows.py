@@ -3,7 +3,7 @@
 Contains methods to create, end, and control SUMO simulation.
 last major edit 12/21/15
 """
-import subprocess, sys, os, toolsPath
+import subprocess, sys, os, constants
 
 import traci
 from math import radians

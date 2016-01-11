@@ -7,8 +7,7 @@ import pandas as pd
 from random import uniform
 from optparse import OptionParser
 
-#from constants import * # sys.path is modified here
-import toolsPath
+from constants import * # sys.path is modified here
 import collisionCheck, Sensors, Controllers
 
 import traci
@@ -16,7 +15,7 @@ import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
 CONFIGNAME = "inter1l"
-outputName = 'intersim_b'
+outputName = 'inter1l/f'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -65,7 +64,7 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
     optParser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                          default=False, help="tell me what you are doing")
     optParser.add_option("-g", "--gui", action="store_true", dest="gui",
-                         default=True, help="run with GUI")
+                         default=False, help="run with GUI")
     optParser.add_option("-c", "--config", type="string", dest="CONFIGNAME",
                          default=None, help="SUMO config to use")
     (options, args) = optParser.parse_args()
@@ -218,7 +217,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=0
+    numiter=200
     
     if numiter == 0:
         egov = rndSpeed()

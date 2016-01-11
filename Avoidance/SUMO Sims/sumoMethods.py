@@ -3,7 +3,7 @@
 Contains methods to create, end, and control SUMO simulation.
 last major edit 1/10/15
 """
-import subprocess, sys, os, toolsPath
+import subprocess, sys, os, constants
 import signal
 
 _wait_in_s = 4
