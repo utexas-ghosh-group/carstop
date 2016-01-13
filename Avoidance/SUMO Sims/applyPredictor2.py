@@ -17,16 +17,16 @@ paramFolder = os.path.realpath("Parameters")
 
 
 # parameters to change:
-simName = "intersim_b"
-sensorName = "b_DSRC"
-nsims = 50
+simName = "inter1l/a"
+sensorName = "inter1l/a_100_1.0_"
+nsims = 40
 egoID = 'ego'
-minPredict = 1.5 # seconds
+minPredict = 2.5 # seconds
 maxPredict = minPredict+1 # seconds
-trajectoryPredictor = Predictors.genericNoisePredict.GenericNoisePredict # Trajectory Predictor for other vehicle
-egoPredictor = Predictors.genericNoisePredict.GenericNoisePredict # Trajectory Predictor for ego vehicle
-#trajectoryPredictor = Predictors.rearEndPredict # Trajectory Predictor for other vehicle
-#egoPredictor = Predictors.rearEndPredict # Trajectory Predictor for ego vehicle
+trajectoryPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for other vehicle
+trajectoryPredictorSettings = [ 2. ]
+egoPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for ego vehicle
+egoPredictorSettings = [ 2. ]
 VEHsize = (5.,2.)
 
 # Input arguments for Predictor function
@@ -49,7 +49,6 @@ for simIndex in range(nsims):
     #simIndex=2
     vehicleFile = vehicleFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     sensorFile = sensorFolder + "/" + sensorName + np.str(simIndex+1) + ".csv"
-    outputFile = outputFolder + "/" + sensorName + np.str(simIndex+1) + ".csv"
     
     vehicleData = pd.read_table(vehicleFile,sep=',') # new data read
     # old data read:
@@ -102,8 +101,14 @@ for simIndex in range(nsims):
     predictedCollision = -1
     predictedCollisionVehID = ''
     
-    # Save ego vehicle's true data for all time steps
-    egoVehicleTrue = vehicleData[vehicleData['vehID']==egoID]        
+    # set up predictors, with true data for all time steps
+    egoVehicleTrue = vehicleData[vehicleData['vehID']==egoID]
+    egoPredictors = egoPredictor(egoVehicleTrue, *egoPredictorSettings)
+    predictors = {}    
+    for vehID in np.unique(vehicleData['vehID']):
+        predictors[vehID] = trajectoryPredictor(
+                                vehicleData[vehicleData['vehID']==vehID],
+                                *trajectoryPredictorSettings)
     for time in timeList:
         # load data until current time
         currSensorData = sensorData[sensorData['time'] <= time]
@@ -123,13 +128,12 @@ for simIndex in range(nsims):
         predictTimes = list( egoVehicleTrue[predictZone]['time'] )      
         
         # for ego vehicle, predict path
-        egoPredicted = egoPredictor(egoVehicle, predictTimes,
-                                    egoVehicleTrue) # genericNoisePredict
+        egoPredicted = egoPredictors.predict(egoVehicle, predictTimes)
                 
         # for each other vehicle, predict path  
         for vehID in otherIDs:
-            predictedPath = trajectoryPredictor(allSensors[vehID], predictTimes, 
-                                                allVehicles[vehID]) # genericNoisePredict
+            predictedPath = predictors[vehID].predict(allSensors[vehID],
+                                                        predictTimes)
             if not np.any(allSensors[vehID]['time'] <= time): # break if vehicle hasn't been sensed
                 break
             # check for collision
@@ -140,8 +144,7 @@ for simIndex in range(nsims):
                     predictedCollision = predictTimes[prediction]
                     predictedCollisionVehID = vehID
                     # !!!!!!!! Think about how to deal with multiple collision
-                    # !!!!!!!! Save not only collision time but names 
-    
+                    
 #    truth += [trueCollision]r
     pred += [predictedCollision]
     predVehID += [predictedCollisionVehID]
