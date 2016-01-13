@@ -274,7 +274,7 @@
         <legend showSizeLegend="1"/>
     </scheme>
 	
-	<viewport zoom="150" x="100" y="100"/>
+	<viewport zoom="180" x="100" y="100"/>
 
 	<delay value="100"/>
 	

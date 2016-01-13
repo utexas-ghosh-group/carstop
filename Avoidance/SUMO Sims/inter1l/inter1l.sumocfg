@@ -5,22 +5,23 @@
     <input>
         <net-file value="inter1l.net.xml"/>
         <route-files value="inter1l.rou.xml"/>
-	<remote-port value="8800"/>
+		<additional-files value="inter1l.add.xml"/>
+		<remote-port value="8800"/>
     </input>
 
     <time>
         <begin value="0"/>
         <end value="100"/>
-	<step-length value=".1"/>
+		<step-length value=".1"/>
     </time>
 
     <processing>
         <time-to-teleport value="-1"/>
-	<ignore-accidents value="true"/>
+		<ignore-accidents value="true"/>
     </processing>
 	
     <gui_only>
-	<quit-on-end value="false"/>
+		<quit-on-end value="true"/>
         <gui-settings-file value="inter1l.view.xml"/>
     </gui_only>
 

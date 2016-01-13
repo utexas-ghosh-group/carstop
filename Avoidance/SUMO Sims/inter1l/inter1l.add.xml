@@ -1,0 +1,5 @@
+<additional>
+	<poly id="crashcircle" color="red" fill="true" layer="5" shape="-1,1 -1,-1 1,-1 1,1"/>
+	<poly id="sensorBorder" color="80,80,80,0" fill="true" layer="3" shape="110,115 115,115 115,110 110,110"/>
+	<poly id="sensor" color="255,255,255,0" fill="true" layer="4" shape="111,114 114,114 114,111 111,111"/>
+</additional>
