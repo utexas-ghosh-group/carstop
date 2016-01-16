@@ -18,15 +18,28 @@ paramFolder = os.path.realpath("Parameters")
 
 # parameters to change:
 simName = "inter1l/a"
-sensorName = "inter1l/a_100_1.0_"
-nsims = 40
+sensorName = "inter1l/a_200_0.0_"
+nsims = 50
 egoID = 'ego'
 minPredict = 2.5 # seconds
 maxPredict = minPredict+1 # seconds
-trajectoryPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for other vehicle
-trajectoryPredictorSettings = [ 2. ]
-egoPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for ego vehicle
-egoPredictorSettings = [ 2. ]
+#trajectoryPredictor = Predictors.GenericNoisePredict
+#trajectoryPredictorSettings = [ 2. ]
+#egoPredictor = Predictors.GenericNoisePredict
+#egoPredictorSettings = [ 2. ]
+Q = np.diag([2., 2., 1., .5])
+R = np.diag([3., 3., 1., .3])
+trajectoryPredictor = Predictors.KalmanPredict_CV
+trajectoryPredictorSettings = [ .1, Q, R ]
+egoPredictor = Predictors.KalmanPredict_CV
+egoPredictorSettings = [ .1, Q, R ]
+#Q = np.diag([2., 2., 1., .5, .3, .3])
+#R = np.diag([3., 3., 1., .3])
+#trajectoryPredictor = Predictors.KalmanPredict_CA_angle
+#trajectoryPredictorSettings = [ .1, Q, R ]
+#egoPredictor = Predictors.KalmanPredict_CA_angle
+#egoPredictorSettings = [ .1, Q, R ]
+
 VEHsize = (5.,2.)
 
 # Input arguments for Predictor function
@@ -114,11 +127,9 @@ for simIndex in range(nsims):
         currSensorData = sensorData[sensorData['time'] <= time]
         egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] <= time]
         # rearrange sensor data into dict with names
-        allVehicles = {} # All vehicle data for sensored vehicle
         allSensors = {} # All sensored data until current time
         otherIDs = np.unique(currSensorData['vehID'])
         for vehID in otherIDs:
-            allVehicles[vehID] = vehicleData[vehicleData['vehID']==vehID]
             allSensors[vehID] = currSensorData[currSensorData['vehID']==vehID]
         
         # Time to predict: current Time+min ~ current Time+max (s)
@@ -130,7 +141,7 @@ for simIndex in range(nsims):
         # for ego vehicle, predict path
         egoPredicted = egoPredictors.predict(egoVehicle, predictTimes)
                 
-        # for each other vehicle, predict path  
+        # for each other vehicle, predict path
         for vehID in otherIDs:
             predictedPath = predictors[vehID].predict(allSensors[vehID],
                                                         predictTimes)
