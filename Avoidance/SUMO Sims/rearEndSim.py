@@ -9,16 +9,16 @@ from random import uniform
 import collisionCheck
 from subprocess import call
 
-numiter = 1
-outputName = 'test'
+numiter = 500
+outputName = 'random'
 
 
 VEHsize = (5,2) # meters, length by width
 DELTAT = .1
-outputFolder = os.path.realpath('Results')
-paramFolder = os.path.realpath('Parameters')
+outputFolder = os.path.realpath('Results/rearEnd')
+paramFolder = os.path.realpath('Parameters/rearEnd')
 configuration = 'rearEnd'
-    
+
 def vehicleSpeed():
     return uniform(55,85)*.447
 
@@ -39,9 +39,10 @@ optParser.add_option("-o", "--output", type="string", dest="outputName",
 (options, args) = optParser.parse_args()
 
 paramFile = paramFolder+'/'+options.outputName+'_param.csv'
-ParameterColumns = ['Ego Speed', 'Lead Speed', 'Ego Accel', 'Lead Accel',
-                    'Brake Magnitude', 'Brake Time',
-                    'Collision Time']
+#ParameterColumns = ['Ego Speed', 'Lead Speed', 'Ego Accel', 'Lead Accel',
+#                    'Brake Magnitude', 'Brake Time',
+#                    'Collision Time']
+ParameterColumns = ['Ego Speed', 'Lead Speed', 'Collision Time']
 outputColumns = ['time','vehID','x','y','angle','speed']
 
 
@@ -63,14 +64,18 @@ while iteration <= options.numiter:
     
     ## now set up parameters and vehicles
     err += Sim.createVehicle('ego','main_0',VEHsize[0])
-    egoControl = Controllers.RearEndEgo(vehicleSpeed(), vehicleAccel())
+    #egoControl = Controllers.RearEndEgo(vehicleSpeed(), vehicleAccel())
+    egoControl = Controllers.RearEndRandom(vehicleSpeed(),maxdecel=.5)
     err += Sim.createVehicle('lead','main_0',50+VEHsize[0])
-    leadControl = Controllers.RearEndBrake(vehicleSpeed(), vehicleAccel())
+    #leadControl = Controllers.RearEndBrake(vehicleSpeed(), vehicleAccel())
+    leadControl = Controllers.RearEndRandom(vehicleSpeed(),maxdecel=5.)
     
-    params_iter = pd.DataFrame([[egoControl.speed, leadControl.speed,
-                                 egoControl.accel, leadControl.accel,
-                                 leadControl.brakeMagnitude, leadControl.brakeTime,
-                                 -1.]], columns=ParameterColumns)
+#    params_iter = pd.DataFrame([[egoControl.speed, leadControl.speed,
+#                                 egoControl.accel, leadControl.accel,
+#                                 leadControl.brakeMagnitude, leadControl.brakeTime,
+#                                 -1.]], columns=ParameterColumns)
+    params_iter = pd.DataFrame([[egoControl.speed, leadControl.speed, -1.]],
+                               columns=ParameterColumns)
     output = None
 
     ttime = 0

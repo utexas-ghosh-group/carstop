@@ -11,7 +11,11 @@ and predict(vData, predictTimes)
     VData = pd dataframe with vehicle's sensed states up to current time
 """
 from rearEndPredict import RearEndPredict
+from rearEndConstant import RearEndConstant
+from rearEndCA import RearEndCA
+from rearEndKalman import RearEndKalman
 from genericNoisePredict import GenericNoisePredict
-from kalmanPredict import KalmanPredict_CV
-from kalmanPredict_CA_angle import KalmanPredict_CA_angle
-from gpmlPredict import GpmlPredict
+#from kalmanPredict import KalmanPredict_CV
+#from kalmanPredict_CA_angle import KalmanPredict_CA_angle
+#from kalmanPredict_line import KalmanPredict_line
+#from gpmlPredict import GpmlPredict
