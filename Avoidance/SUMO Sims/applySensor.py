@@ -12,14 +12,30 @@ import pandas as pd
 import Sensors
 import os
 #from constants import VState
+from optparse import OptionParser
 
 inputFolder = os.path.realpath("Results")
 outputFolder = os.path.realpath("Sensor Results")
 
+optParser = OptionParser()
+optParser.add_option("-a", "--range", type="float", dest="maxCommunicationRange",
+                     default = 200.)
+optParser.add_option("-b", "--noise", type="float", dest="noiseLevel",
+                     default = 0.)
+optParser.add_option("-c", "--letter", type="string", dest="letter",
+                     default = "q")
+optParser.add_option("-n","--nsims", type="int", dest="nsims", default= 10)
+(options, args) = optParser.parse_args()
+if options.noiseLevel > 1:
+    options.noiseLevel=options.noiseLevel*.01
 
-simName = "rearEnd"
-#simName = "intersim_b"
-nsims = 30
+simName = "inter1l/" + options.letter
+outputName = "inter1l/" + options.letter
+outputName = outputName + "_" + str(int(options.maxCommunicationRange))
+outputName = outputName + "_" + str(options.noiseLevel) + "_"
+#simName = "rearEnd/random"
+#outputName = "rearEnd/random_noise_"
+nsims = options.nsims
 sensorToUse = Sensors.DSRC
 #sensorToUse = Sensors.FrontRadar
 vehicleIDtoSeek = 'ego'
@@ -28,7 +44,7 @@ vehicleIDtoSeek = 'ego'
 for simIndex in range(nsims):
     #simIndex = 3
     inFile = inputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
-    outFile = outputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
+    outFile = outputFolder + "/" + outputName + np.str(simIndex+1) + ".csv"
     
     # read a result file - old
     #vdata = pd.read_table(inFile, sep=";")
@@ -62,6 +78,7 @@ for simIndex in range(nsims):
         if np.any(egoLoc):
             egoVehicle = currentData[egoLoc].iloc[0]
             sensor = sensorToUse(egoVehicle, realign=False)
+            sensor.setStuff(options.noiseLevel, options.maxCommunicationRange)
             currentData[egoLoc == False].apply(sensor.addObstacle, axis = 1)
             sensorData[time] = pd.DataFrame(sensor.getObstacles())
             senseTimeList = senseTimeList + [time]

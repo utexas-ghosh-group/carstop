@@ -15,7 +15,7 @@ import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
 CONFIGNAME = "inter1l"
-outputName = 'inter1l/f'
+outputName = 'inter1l/q'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -145,7 +145,7 @@ def getSetParams(vehID):
 def doStep():
     state.step += 1
     if setting.verbose:
-        print "step", state.step
+        print("step",state.step)
     traci.simulationStep()
     # adding new vehicles, if any    
     departed = traci.simulation.getSubscriptionResults()[tc.VAR_DEPARTED_VEHICLES_IDS]    
@@ -160,7 +160,7 @@ def doStep():
         #getController(v, vehicleSetParams[v])
         if controllers[v] is not None:
             if setting.verbose:
-                print "allowing forward and lane crashes for",v
+                print("allowing forward and lane crashes for",v)
             traci._sendIntCmd(tc.CMD_SET_VEHICLE_VARIABLE, tc.VAR_SPEEDSETMODE,
                               v, controllers[v].speedMode)
             traci.vehicle.setLaneChangeMode(v, controllers[v].laneChangeMode)
@@ -187,7 +187,7 @@ def doStep():
         #
         if setting.verbose:
             for vstat in sensor.getObstacles():
-                print vehID, "detects", vstat.x, vstat.y,"speed",vstat.speed
+                print(vehID, "detects", vstat.x, vstat.y,"speed",vstat.speed)
         # store this vehicle movement
         output.add([[state.step*.1, vehID, vState.x, vState.y, vState.angle,
                      vState.speed]])
@@ -197,7 +197,7 @@ def doStep():
             commandedSpeed = controllers[vehID].nextStep(sensor.getObstacles())
             traci.vehicle.setSpeed(vehID, commandedSpeed)
             if setting.verbose:
-                print "setting speed", commandedSpeed
+                print("setting speed", commandedSpeed)
 
 
 def resetParam(varID, varValue, vehID):
@@ -217,7 +217,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=200
+    numiter=10
     
     if numiter == 0:
         egov = rndSpeed()

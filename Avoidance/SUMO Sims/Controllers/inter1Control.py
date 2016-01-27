@@ -34,18 +34,18 @@ class Inter1Control:
         
     def newSpeedCommand(self):
         MPH2MS = .447
-        chosenSpeed = truncatedNormal(self.speed/MPH2MS,5,55,85)*MPH2MS
+        chosenSpeed = truncatedNormal(self.speed/MPH2MS,5,20,50)*MPH2MS
         chosenAccel = random.uniform(0,self.maxAccel) * self.DELTAT
         meanTime = 2.0 # seconds
         chosenTime = np.floor(random.expovariate(1/meanTime) / self.DELTAT) + 1
         
-        accelPeriod = np.arange(self.speed,chosenSpeed,
-                                chosenAccel*np.sign(chosenSpeed-self.speed))
+        accelPeriod = np.arange(chosenSpeed,self.speed,
+                                chosenAccel*np.sign(self.speed-chosenSpeed))
         if chosenTime <= len(accelPeriod):
-            self.speedCommand = accelPeriod[0:chosenTime].tolist()
+            self.speedCommand = accelPeriod[-chosenTime:].tolist()
         else:
             steadyPeriod = [chosenSpeed]*(chosenTime-len(accelPeriod))
-            self.speedCommand = accelPeriod.tolist() + steadyPeriod
+            self.speedCommand = steadyPeriod + accelPeriod.tolist()
         
 def truncatedNormal(mean, sd, minvalue = 0, maxvalue = 30):
     answer = minvalue - 1
