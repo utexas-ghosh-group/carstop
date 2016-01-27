@@ -9,6 +9,7 @@ constant velocity model, plus CA-style models
 
 import numpy as np
 import pandas as pd
+from usefulFunctions import CA_physics
 
 def getLoc(position, route):
     if route == 'E2W':
@@ -160,28 +161,6 @@ def getPos(x,y,angle,route):
             position = start[0] + angle*rad
     return position
 
-# State space
-# x: easting
-# v: speed
-# a: acceleration
-# dt: time step
-# state transition function
-# state, noise are numpy array
-def physics(x, v, a, dt):
-    
-#    al = 3.5
-#    if dt < al:
-#        pos = x + dt*v + dt*dt*a/2. - a*np.exp(dt-al) + a*np.exp(al)*(1+dt)
-#        speed = v + dt*a - a*np.exp(dt-al) + a*np.exp(al)
-#    else:
-#        pos = x + dt*v + al*al*a/2. - a + a*np.exp(al)*(1+al)
-#        speed = v + al*a - a + a*np.exp(al)
-    
-    pos = x + v*dt
-    speed = v
-    
-    return [pos, speed]
-
 
 class CV_line:
     
@@ -203,9 +182,9 @@ class CV_line:
         returnedStates = vData[vData['time']<0] # empty state to return
         for time in predictTimes:
             newState = currState.copy()
-            newPos, newSpeed = physics(position, currState.speed, accel,
-                                       time-currState.time)
-            new_x,new_y,new_angle = getLoc(newPos)
+            newPos, newSpeed = CA_physics(time-currState.time, position,
+                                          currState.speed) # no accel right now
+            new_x,new_y,new_angle = getLoc(newPos, self.route)
             newState.x = new_x
             newState.y = new_y
             newState.speed = newSpeed

@@ -14,8 +14,8 @@ import traci
 import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
-CONFIGNAME = "inter1l"
-outputName = 'inter1l/q'
+CONFIGNAME = "inter1l/inter1lf"
+outputName = 'inter1l/f'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -73,9 +73,9 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
     completeCommand = [SUMO]
     if options.gui:
         completeCommand = [SUMOGUI]
-    sumoConfig = defaultCONFIGNAME + "/" + defaultCONFIGNAME + ".sumocfg"
+    sumoConfig = defaultCONFIGNAME + ".sumocfg"
     if options.CONFIGNAME is not None:
-        sumoConfig = options.CONFIGNAME+"/"+options.CONFIGNAME+".sumocfg"
+        sumoConfig = options.CONFIGNAME + ".sumocfg"
     completeCommand += ["-c", sumoConfig] 
     if randomizerToUse is None:  # more subtle randomness still in progress
         completeCommand += ["--random"]
@@ -171,7 +171,7 @@ def doStep():
         vStates[vehID] = VState( tempParams + vehicleSetParams[vehID] )
     #
     for vehID, vState in vStates.iteritems():
-        sensor = sensorToUse(vState)
+        sensor = sensorToUse(vState, realign=True)
         #
         for otherID, otherState in vStates.iteritems():
             if vehID != otherID:
@@ -217,7 +217,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=10
+    numiter=20
     
     if numiter == 0:
         egov = rndSpeed()
