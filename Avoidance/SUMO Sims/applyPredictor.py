@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Runs a predictor code on sensor data and returns the output
-1/27/16
+1/28/16
 """
 import numpy as np
 import pandas as pd
@@ -24,14 +24,14 @@ def applyPredictor(vehicleData, sensorData, egoVehicleID, minPredict, maxPredict
     
     # rearrange vehicle data into list of dataframes (by time)
     timeVehicleData = []
-    currentTime = vehicleData.loc[0,"time"]
+    currentTime = vehicleData.iloc[0]["time"]
     timeList = [currentTime] # keeping ordered time seperately
     lastIndex = 0
     for ind in range(vehicleData.shape[0]):
-        if vehicleData.loc[ind,"time"] > currentTime:
+        if vehicleData.iloc[ind]["time"] > currentTime:
             timeVehicleData += [ vehicleData.iloc[lastIndex:ind] ]
             lastIndex = ind
-            currentTime = vehicleData.loc[ind,"time"]
+            currentTime = vehicleData.iloc[ind]["time"]
             timeList = timeList + [currentTime]
         if ind == vehicleData.shape[0] - 1:
             timeVehicleData += [ vehicleData.iloc[lastIndex:ind+1] ]

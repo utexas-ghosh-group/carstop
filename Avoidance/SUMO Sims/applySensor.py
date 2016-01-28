@@ -2,7 +2,7 @@
 """
 Take vehicle position/vel results and return the data from the vehicle's sensors
 Only returns data sensed by one vehicle, the designated ego vehicle
-1/27/16
+1/28/16
 """
 
 import numpy as np
@@ -21,21 +21,20 @@ def applySensor(vdata, egoVehicleID, sensorToUse, sensorSettings,
     
     # rearrange data into panel of dataframes (by time)
     timeSortedData = {}
-    currentTime = vdata.loc[0,"time"]
+    currentTime = vdata.iloc[0]["time"]
     timeList = [currentTime] # keeping ordered time seperately
     lastIndex = 0
     for ind in range(vdata.shape[0]):
-        if vdata.loc[ind,"time"] > currentTime:
+        if vdata.iloc[ind]["time"] > currentTime:
             timeSortedData[currentTime] = vdata.iloc[lastIndex:ind]
             lastIndex = ind
-            currentTime = vdata.loc[ind,"time"]
+            currentTime = vdata.iloc[ind]["time"]
             timeList = timeList + [currentTime]
         if ind == vdata.shape[0] - 1:
             timeSortedData[currentTime] = vdata.iloc[lastIndex:ind+1]
     
     # for each time, check for egoVehicleID if specified
-    sensorData = {}
-    senseTimeList = []
+    sensorData = []
     for time in timeList:
         currentData = timeSortedData[time]
         egoLoc = currentData['vehID'] == egoVehicleID
@@ -45,17 +44,16 @@ def applySensor(vdata, egoVehicleID, sensorToUse, sensorSettings,
             sensor = sensorToUse(egoVehicle, False, *sensorSettings)
             currentData[egoLoc == False].apply(sensor.addObstacle, axis = 1)
             if egoSensorToUse is None:
-                sensorData[time] = pd.DataFrame(sensor.getObstacles())
+                sensorData += [pd.DataFrame(sensor.getObstacles())]
             else:
                 egoSensor = egoSensorToUse(egoVehicle, False,
                                            *egoSensorSettings)
                 egoSensor.addObstacle(egoVehicle)
                 allObstacles = sensor.getObstacles() + egoSensor.getObstacles()
-                sensorData[time] = pd.DataFrame(allObstacles)
-            senseTimeList = senseTimeList + [time]
+                sensorData += [pd.DataFrame(allObstacles)]
     
     # print all sensing instances into a csv
     sensorTable = pd.DataFrame([])
-    for time in senseTimeList:
-        sensorTable = sensorTable.append(sensorData[time])
+    for sensingInstance in sensorData:
+        sensorTable = sensorTable.append(sensingInstance)
     return sensorTable
