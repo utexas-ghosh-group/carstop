@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Runs a predictor code and returns the output
-11/10/15
+1/24/16
 """
 import numpy as np
 import pandas as pd
@@ -17,16 +17,39 @@ paramFolder = os.path.realpath("Parameters")
 
 
 # parameters to change:
-simName = "inter1l/a"
-sensorName = "inter1l/a_100_1.0_"
-nsims = 40
+simName = "inter1l/q"
+sensorName = "inter1l/q_200_0.0_"
+nsims = 10
 egoID = 'ego'
 minPredict = 2.5 # seconds
 maxPredict = minPredict+1 # seconds
-trajectoryPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for other vehicle
-trajectoryPredictorSettings = [ 2. ]
-egoPredictor = Predictors.GenericNoisePredict # Trajectory Predictor for ego vehicle
-egoPredictorSettings = [ 2. ]
+#trajectoryPredictor = Predictors.GenericNoisePredict
+#trajectoryPredictorSettings = [ 2. ]
+#egoPredictor = Predictors.GenericNoisePredict
+#egoPredictorSettings = [ 2. ]
+#Q = np.diag([2., 2., 1., .5])
+#R = np.diag([3., 3., 1., .3])
+#trajectoryPredictor = Predictors.KalmanPredict_CV
+#trajectoryPredictorSettings = [ .1, Q, R ]
+#egoPredictor = Predictors.KalmanPredict_CV
+#egoPredictorSettings = [ .1, Q, R ]
+#Q = np.diag([2., 2., 1., .5, .3, .3])
+#R = np.diag([3., 3., 1., .3])
+#trajectoryPredictor = Predictors.KalmanPredict_CA_angle
+#trajectoryPredictorSettings = [ .1, Q, R ]
+#egoPredictor = Predictors.KalmanPredict_CA_angle
+#egoPredictorSettings = [ .1, Q, R ]
+Q = np.diag([2., 2.])
+R = np.diag([1., 1.])
+trajectoryPredictor = Predictors.KalmanPredict_line
+trajectoryPredictorSettings = [ .1, 'N2S', Q, R ]
+egoPredictor = Predictors.KalmanPredict_line
+egoPredictorSettings = [ .1, 'S2W', Q, R ]
+#trajectoryPredictor = Predictors.RearEndKalman
+#trajectoryPredictorSettings = [ .1, 1. ]
+#egoPredictor = Predictors.GenericNoisePredict
+#egoPredictorSettings = [ 1. ]
+
 VEHsize = (5.,2.)
 
 # Input arguments for Predictor function
@@ -38,7 +61,7 @@ paramFile = paramFolder+ "/" + simName + "_param.csv"
 paramTruth = pd.read_csv(paramFile)
 
 truth = paramTruth["Collision Time"].tolist()
-truthVehID = ['alter']*len(truth) # Crashed vehicle's ID for corresponding time (temporary setting)
+truthVehID = paramTruth["Colliding Vehicle"].tolist()
 pred = []
 predVehID = []
 
@@ -46,7 +69,6 @@ predVehID = []
 for simIndex in range(nsims):
     print "- nsim: " + str(simIndex+1) +" / " +str(nsims)
     print " Loading and modifying data ..."
-    #simIndex=2
     vehicleFile = vehicleFolder + "/" + simName + np.str(simIndex+1) + ".csv"
     sensorFile = sensorFolder + "/" + sensorName + np.str(simIndex+1) + ".csv"
     
@@ -109,16 +131,14 @@ for simIndex in range(nsims):
         predictors[vehID] = trajectoryPredictor(
                                 vehicleData[vehicleData['vehID']==vehID],
                                 *trajectoryPredictorSettings)
-    for time in timeList:
+    for time in timeList[1:]:
         # load data until current time
         currSensorData = sensorData[sensorData['time'] <= time]
         egoVehicle = egoVehicleTrue[egoVehicleTrue['time'] <= time]
         # rearrange sensor data into dict with names
-        allVehicles = {} # All vehicle data for sensored vehicle
         allSensors = {} # All sensored data until current time
         otherIDs = np.unique(currSensorData['vehID'])
         for vehID in otherIDs:
-            allVehicles[vehID] = vehicleData[vehicleData['vehID']==vehID]
             allSensors[vehID] = currSensorData[currSensorData['vehID']==vehID]
         
         # Time to predict: current Time+min ~ current Time+max (s)
@@ -130,7 +150,7 @@ for simIndex in range(nsims):
         # for ego vehicle, predict path
         egoPredicted = egoPredictors.predict(egoVehicle, predictTimes)
                 
-        # for each other vehicle, predict path  
+        # for each other vehicle, predict path
         for vehID in otherIDs:
             predictedPath = predictors[vehID].predict(allSensors[vehID],
                                                         predictTimes)
@@ -151,27 +171,37 @@ for simIndex in range(nsims):
 
 
 # basic scoring
-nTP = 0.0
-nT = 0.0
-nP = 0.0
+nTP = 0
+nTN = 0
+nT = 0
+nP = 0
+ahead = 0
+behind = 0
 tolerance = 1.
 for sim in range(nsims):
     trueCollision = truth[sim]
     trueVehID = truthVehID[sim]
     predictedCollision = pred[sim]
     predictedVehID = predVehID[sim]
-    if trueCollision > 0:
+    if (trueCollision > 0 and predictedCollision > 0):
         nT += 1
-    if predictedCollision > 0:
         nP += 1
-    if (trueCollision > 0 and predictedCollision > 0 and trueVehID == predictedVehID and
-        np.abs(predictedCollision - trueCollision) <= tolerance):
+        if np.abs(predictedCollision - trueCollision) <= tolerance:
             nTP += 1
-
+        elif predictedCollision - trueCollision < -tolerance:
+            ahead += 1
+        else:
+            behind += 1
+    elif trueCollision > 0:
+        nT += 1
+    elif predictedCollision > 0:
+        nP += 1
+    else:
+        nTN += 1
 
 # scoring            
-if nTP > 0:
-    FN = (nT-nTP)/nT
-    FP = (nP-nTP)/nP    
-    print "Precision: " +str(nTP/float(nP))
-    print "Recall: " + str(nTP/float(nT))
+print str(nT)+" collisions, "+str(nP)+" predictions"
+print "correct collisions: " + str(nTP)
+print "correct safe: "+ str(nTN)
+print "warnings ahead of time: "+str(ahead)
+print "warnings behind time: "+str(behind)

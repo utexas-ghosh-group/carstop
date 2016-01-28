@@ -14,8 +14,35 @@
   <route id="E2N" edges="2i 4o"/>
   <route id="N2W" edges="4i 1o"/>
   <route id="N2E" edges="4i 2o"/>
+ 
+  <!-- a -->
+  <vehicle depart="0" id="ego" route="S2N" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="E2W" type="gen" color="1,0,1" departSpeed="5.0" />
+  
 
+  <!-- b
+  <vehicle depart="0" id="ego" route="S2N" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="W2E" type="gen" color="1,0,1" departSpeed="5.0" />
+  -->
+
+  <!-- c
+  <vehicle depart="0" id="ego" route="S2N" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="E2N" type="gen" color="1,0,1" departSpeed="5.0" />
+  -->
+
+  <!-- d
+  <vehicle depart="0" id="ego" route="S2E" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="W2E" type="gen" color="1,0,1" departSpeed="5.0" />
+  -->
+
+  <!-- e
+  <vehicle depart="0" id="ego" route="S2N" type="gen" departSpeed="5.0" />
+  <vehicle depart="0" id="alter" route="W2S" type="gen" color="1,0,1" departSpeed="5.0" />
+  -->
+
+  <!-- f
   <vehicle depart="0" id="ego" route="S2W" type="gen" departSpeed="5.0" />
   <vehicle depart="0" id="alter" route="N2S" type="gen" color="1,0,1" departSpeed="5.0" />
+  -->
 
 </routes>

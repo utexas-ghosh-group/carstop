@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Gives a vehicle approximate knowledge about others, if they are close enough.
-Note that it realigns them as if this vehicle has
-position (0,0) and angle 0.
-Last modified 11/09/15
+Adds Gaussian noise, and removes vehicles out of a circular range.
+Can also remove random instances with packet loss.
+Last modified 1/27/16
 """
 import sys, os
 sys.path.append(os.path.realpath(__file__)[:-len("/Sensors/DSRC.py")])
@@ -14,26 +13,30 @@ import random
 
 class DSRC():
     
-    def __init__(self,state,realign=True):    
+    def __init__(self,state,realign,noiseLevel=1.,
+                 maxCommunicationRange=500.,
+                 packetLossRate=0.):    
         self.state = state
         self.obstacles = []
         self.realign = realign
+        self.noiseLevel = noiseLevel # ratio of max sensor noises
+        self.maxCommunicationRange = maxCommunicationRange # meters
+        self.packetLossRate = packetLossRate # fraction of messages lost, 0-1 
     
     def addObstacle(self,vstate):
-        maxCommunicationRange = 500   # meters
-        packetLossRate = 0 # fraction of messages lost    
         
         # model all sensor errors as Gaussian
-        positionErrorSD = 1.   # meters
-        speedErrorSD = .5  # meters/second
-        #accelErrorSD = .1      # meters/second^2
-        # not sending acceleration atm... will take some effort to include        
+        positionErrorSD = 4. * self.noiseLevel / 2.  # meters
+        speedErrorSD = 5.*.447 * self.noiseLevel / 2. # meters/second
+        #angleErrorSD = .1 * self.noiseLevel       # radians
+        #accelErrorSD = .2 * self.noiseLevel      # meters/second^2
+        # not sending acceleration atm...       
         
-        if vstate.vehID == self.state.vehID: # accidentally sensing yourself
+#        if vstate.vehID == self.state.vehID: # accidentally sensing yourself
+#            return
+        if distance(self.state, vstate) > self.maxCommunicationRange:
             return
-        if distance(self.state, vstate) > maxCommunicationRange:
-            return
-        if random.uniform(0,1) < packetLossRate:
+        if random.uniform(0,1) < self.packetLossRate:
             return
         
         if self.realign:
@@ -47,7 +50,6 @@ class DSRC():
         
         
         self.obstacles.append(trueObstacle)
-
     
     def getObstacles(self):
         return self.obstacles

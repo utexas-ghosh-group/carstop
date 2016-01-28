@@ -1,42 +1,23 @@
 # -*- coding: utf-8 -*-
 """
 Take vehicle position/vel results and return the data from the vehicle's sensors
-Designed for simple highway example, right now only return data for one vehicle
-
-Only prints to csv,
-    changing it to a function for the analyzer to call would not be hard
+Only returns data sensed by one vehicle, the designated ego vehicle
+1/27/16
 """
 
 import numpy as np
 import pandas as pd
-import Sensors
-import os
+#import Sensors
 #from constants import VState
 
-inputFolder = os.path.realpath("Results")
-outputFolder = os.path.realpath("Sensor Results")
-
-
-simName = "rearEnd"
-#simName = "intersim_b"
-nsims = 30
-sensorToUse = Sensors.DSRC
-#sensorToUse = Sensors.FrontRadar
-vehicleIDtoSeek = 'ego'
-
-
-for simIndex in range(nsims):
-    #simIndex = 3
-    inFile = inputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
-    outFile = outputFolder + "/" + simName + np.str(simIndex+1) + ".csv"
+def applySensor(vdata, egoVehicleID, sensorToUse, sensorSettings,
+                egoSensorToUse = None, egoSensorSettings=None):
     
     # read a result file - old
     #vdata = pd.read_table(inFile, sep=";")
     #vdata = vdata[["timestep_time","vehicle_id","vehicle_x","vehicle_y",
     #                   "vehicle_angle","vehicle_speed"]]
-    #vdata.columns = ["time","vehID","x","y","angle","speed"]
-    # read a result file - new
-    vdata = pd.read_table(inFile, sep=',')               
+    #vdata.columns = ["time","vehID","x","y","angle","speed"]            
     
     # rearrange data into panel of dataframes (by time)
     timeSortedData = {}
@@ -52,22 +33,29 @@ for simIndex in range(nsims):
         if ind == vdata.shape[0] - 1:
             timeSortedData[currentTime] = vdata.iloc[lastIndex:ind+1]
     
-    # for each time, check for vehicleIDtoSeek if specified
-    # run sensor on each other vehicle
+    # for each time, check for egoVehicleID if specified
     sensorData = {}
     senseTimeList = []
     for time in timeList:
         currentData = timeSortedData[time]
-        egoLoc = currentData['vehID'] == vehicleIDtoSeek
+        egoLoc = currentData['vehID'] == egoVehicleID
         if np.any(egoLoc):
+            # run sensor on each vehicle
             egoVehicle = currentData[egoLoc].iloc[0]
-            sensor = sensorToUse(egoVehicle, realign=False)
+            sensor = sensorToUse(egoVehicle, False, *sensorSettings)
             currentData[egoLoc == False].apply(sensor.addObstacle, axis = 1)
-            sensorData[time] = pd.DataFrame(sensor.getObstacles())
+            if egoSensorToUse is None:
+                sensorData[time] = pd.DataFrame(sensor.getObstacles())
+            else:
+                egoSensor = egoSensorToUse(egoVehicle, False,
+                                           *egoSensorSettings)
+                egoSensor.addObstacle(egoVehicle)
+                allObstacles = sensor.getObstacles() + egoSensor.getObstacles()
+                sensorData[time] = pd.DataFrame(allObstacles)
             senseTimeList = senseTimeList + [time]
     
     # print all sensing instances into a csv
     sensorTable = pd.DataFrame([])
     for time in senseTimeList:
         sensorTable = sensorTable.append(sensorData[time])
-    sensorTable.to_csv(outFile, index = False)
+    return sensorTable

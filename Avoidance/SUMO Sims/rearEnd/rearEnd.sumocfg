@@ -20,7 +20,7 @@
     </processing>
 	
     <gui_only>
-	<quit-on-end value="true"/>
+	<quit-on-end value="false"/>
         <gui-settings-file value="rearEnd.view.xml"/>
     </gui_only>
 

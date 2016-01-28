@@ -75,3 +75,26 @@ def RearEndPredict(sensedV,predictTimes, *args):
         vNextState = movePhysics(vcurrentState,chosenSpeed,chosenAccel,time)
         returnedStates = returnedStates.append(vNextState)
     return returnedStates
+
+class RearEndPredict:
+    def __init__(self, trueTrajectory, dt=.1):
+        self.dt = dt
+        
+    def predict(self, vData, predictTimes):
+        filterLen = min(6, vData.shape[0])  
+    
+        # first check for braking    
+        speed = np.array(vData.loc[:,'speed'])
+        accel = np.diff(speed, 1)
+        modelAccels = []
+        modelHoods = []
+        if filterLen <= 1:
+            chosenAccel=0
+            chosenTime=0
+        else:
+            for brakeTime in np.arange(len(accel)-filterLen,len(accel)):
+                [thisAccel,thisHood] = brakeLikelihood(speed, accel, brakeTime)
+                modelAccels += [thisAccel]
+                modelHoods += [thisHood]
+            chosenTime = np.argmin(modelHoods)
+            chosenAccel = modelAccels[chosenTime]
