@@ -11,3 +11,4 @@ from rearEndEgo import RearEndEgo
 from rearEndBrake import RearEndBrake
 from rearEndRandom import RearEndRandom
 from inter1Control import Inter1Control
+from inter1ControlSmart import Inter1ControlSmart

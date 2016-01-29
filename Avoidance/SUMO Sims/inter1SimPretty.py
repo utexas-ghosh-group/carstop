@@ -160,7 +160,7 @@ def doStep():
             thisv = egov
         else:
             thisv = alterv
-        controllers[v] = Controllers.Inter1Control(v, thisv)
+        controllers[v] = Controllers.Inter1ControlSmart(v, thisv)
         #getController(v, vehicleSetParams[v])
         if controllers[v] is not None:
             if setting.verbose:
@@ -175,7 +175,7 @@ def doStep():
         vStates[vehID] = VState( tempParams + vehicleSetParams[vehID] )
     #
     for vehID, vState in vStates.iteritems():
-        sensor = sensorToUse(vState)
+        sensor = sensorToUse(vState, realign = True)
         #
         for otherID, otherState in vStates.iteritems():
             if vehID != otherID:
@@ -188,8 +188,8 @@ def doStep():
                         state.collisionOccurred = state.step*.1
                     break
                 #
-                # update sensor
-                sensor.addObstacle(otherState)
+            # update sensor
+            sensor.addObstacle(otherState)
         #
         if not state.commEstablished and len(sensor.getObstacles()) > 0:
             addSensorSymbol()
