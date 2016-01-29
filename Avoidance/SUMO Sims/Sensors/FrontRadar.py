@@ -4,12 +4,11 @@
 Like DSRC, but with range primarily in the front (of the ego)
 Note that it realigns them as if this vehicle has
 position (0,0) and angle 0.
-Last modified 1/27/16
+Last modified 1/28/16
 """
 import sys, os
-sys.path.append(os.path.realpath(__file__)[:-len("/Sensors/DSRC.py")])
-from constants import *
-from usefulMethods import realignV
+sys.path.append(os.path.realpath(__file__)[:-len("/Sensors/FrontRadar.py")])
+from usefulMethods import realignV, distance
 import random
 from math import atan2, pi
 
@@ -20,6 +19,10 @@ class FrontRadar():
         self.state = state
         self.obstacles = []
         self.realign = realign
+        self.noiseLevel = noiseLevel
+        self.maxCommunicationRange = maxCommunicationRange
+        self.packetLossRate = packetLossRate
+        self.scope = scope
     
 #    def inRange(self,vstate): # a rectangular model
 #        forwardRange = 30.
@@ -38,7 +41,6 @@ class FrontRadar():
         return angleOfObject > -self.scope and angleOfObject < self.scope
     
     def addObstacle(self,vstate):
-        packetLossRate = 0 # fraction of messages lost    
         
         # model all sensor errors as Gaussian
         positionErrorSD = 4. * self.noiseLevel / 2.  # meters
@@ -46,9 +48,11 @@ class FrontRadar():
         
         if vstate.vehID == self.state.vehID: # accidentally sensing yourself
             return
+        if distance(self.state, vstate) > self.maxCommunicationRange:
+            return
         if not self.inRange(realignV(self.state,vstate)):
             return
-        if random.uniform(0,1) < packetLossRate:
+        if random.uniform(0,1) < self.packetLossRate:
             return
         
         if self.realign:

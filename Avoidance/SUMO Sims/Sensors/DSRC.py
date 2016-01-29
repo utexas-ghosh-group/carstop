@@ -3,11 +3,10 @@
 """
 Adds Gaussian noise, and removes vehicles out of a circular range.
 Can also remove random instances with packet loss.
-Last modified 1/27/16
+Last modified 1/28/16
 """
 import sys, os
 sys.path.append(os.path.realpath(__file__)[:-len("/Sensors/DSRC.py")])
-from constants import *
 from usefulMethods import realignV, distance
 import random
 

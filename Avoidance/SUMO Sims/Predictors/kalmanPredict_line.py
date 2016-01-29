@@ -11,9 +11,6 @@ import numpy as np
 import pandas as pd
 import sys, os
 sys.path.append(os.path.realpath('/usr/local/lib/python2.7/dist-packages/filterpy'))
-#from filterpy.kalman import KalmanFilter as KF
-from filterpy.kalman import UnscentedKalmanFilter as UKF  
-from filterpy.kalman import MerweScaledSigmaPoints as SigmaPoints
 import copy
 
 def getLoc(position, route):
@@ -202,9 +199,14 @@ def h_kal(state):
     return state.copy()[:2]
 
 
-class KalmanPredict_line:
+class KalmanPredict_line:    
     
     def __init__(self, trueTrajectory, dt, route, Q=np.eye(2), R=np.eye(2)):
+        
+        #from filterpy.kalman import KalmanFilter as KF
+        from filterpy.kalman import UnscentedKalmanFilter as UKF  
+        from filterpy.kalman import MerweScaledSigmaPoints as SigmaPoints        
+        
         n_state = len(Q)
         n_meas = len(R)
         sigmas = SigmaPoints(n_state, alpha=.1, beta=2., kappa=0.)
