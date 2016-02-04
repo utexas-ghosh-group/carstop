@@ -1,4 +1,5 @@
 clear;
+addpath('/home/motro/Documents/Projects/CarStop/Trajectory/Map Code')
 % generate Roads
 coords = load('converted.csv');
 load('roadnames.mat');

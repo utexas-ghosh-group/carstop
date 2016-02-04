@@ -1,6 +1,9 @@
 clear;
 load('roads_basic.mat'); % roads = struct with names field
 nroads = length(roads);
+RepoPath = pwd;
+RepoPath = RepoPath(1:length(RepoPath)-length('mapCreationCode'));
+addpath([RepoPath 'Map Code'])
 
 %% fill in transitions between current roads from file
 transitions = zeros(nroads);

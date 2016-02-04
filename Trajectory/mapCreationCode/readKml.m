@@ -1,4 +1,4 @@
-fid = fopen('I_2.kml','r');
+fid = fopen('I2_2_16.kml','r');
 line = fgetl(fid);
 names = {'names'};
 coords = {'coords','',''};
