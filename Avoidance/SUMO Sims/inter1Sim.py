@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-last modified 1/6/16
+last modified 2/3/16
 """
 import subprocess, os, math
 import pandas as pd
@@ -14,8 +14,8 @@ import traci
 import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
-CONFIGNAME = "inter1l/inter1lf"
-outputName = 'inter1l/f'
+CONFIGNAME = "inter1l/inter1lc"
+outputName = 'inter1l/random_c'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -105,7 +105,7 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
 
 
 def takeNextStep():
-    result = state.step < MAXSTEPS
+    result = state.step < 100
     result &= traci.simulation.getMinExpectedNumber() > 0    
     result &= state.collisionOccurred - state.step <= 3 # 3 seconds after collision
     return result
@@ -179,7 +179,8 @@ def doStep():
                 # check for collisions
                 if collisionCheck.check(vState, otherState):
                     #print "collision! pos",vState.x,vState.y,"step",state.step
-                    state.collisionOccurred = state.step*.1
+                    if state.collisionOccurred <= 0:
+                        state.collisionOccurred = state.step*.1
                     break
                 #
                 # update sensor
@@ -217,7 +218,7 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=20
+    numiter=200
     
     if numiter == 0:
         egov = rndSpeed()

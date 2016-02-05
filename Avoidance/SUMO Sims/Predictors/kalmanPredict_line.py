@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 constant velocity Kalman filter
-1/13/16
+2/4/16
 """
 # Install filterpy
 # http://pythonhosted.org/filterpy/
@@ -34,7 +34,7 @@ def getLoc(position, route):
     elif route == 'S2W':
         start = (101.65,95)
         end = (95,101.65)
-        rad = start[0]-end[0]
+        rad = np.abs(end[0]-start[0])
         if position <= start[1]:
             x = start[0]
             y = position
@@ -52,7 +52,7 @@ def getLoc(position, route):
     elif route == 'E2N':
         start = (105,101.65)
         end = (101.65,105)
-        rad = start[0]-end[0]
+        rad = np.abs(end[0]-start[0])
         if position <= 200-start[0]:
             x = 200-position
             y = start[1]
@@ -70,7 +70,7 @@ def getLoc(position, route):
     elif route == 'S2E':
         start = (101.65,95)
         end = (105,98.35)
-        rad = end[0]-start[0]
+        rad = np.abs(end[0]-start[0])
         if position <= start[1]:
             x = start[0]
             y = position
@@ -88,7 +88,7 @@ def getLoc(position, route):
     elif route == 'W2S':
         start = (95,98.35)
         end = (98.35,95)
-        rad = end[0]-start[0]
+        rad = np.abs(end[0]-start[0])
         if position <= start[0]:
             x = position
             y = start[0]
@@ -118,7 +118,7 @@ def getPos(x,y,angle,route):
         start = (101.65,95)
         end = (95,101.65)
         center = (95,95)
-        rad = np.abs(start[0]-center[0])
+        rad = np.abs(end[0]-start[0])
         if y <= start[1]:
             position = y
         elif x <= end[0]:
@@ -129,7 +129,7 @@ def getPos(x,y,angle,route):
         start = (105,101.65)
         end = (101.65,105)
         center = (105,105)
-        rad = np.abs(start[0]-center[0])
+        rad = np.abs(end[0]-start[0])
         if x >= start[0]:
             position = 200 - x
         elif y >= end[1]:
@@ -141,7 +141,7 @@ def getPos(x,y,angle,route):
         start = (101.65,95)
         end = (105,98.35)
         center = (105,95)
-        rad = np.abs(start[0]-center[0])
+        rad = np.abs(end[0]-start[0])
         if y <= start[1]:
             position = y
         elif x >= end[0]:
@@ -153,7 +153,7 @@ def getPos(x,y,angle,route):
         start = (95,98.35)
         end = (98.35,95)
         center = (95,95)
-        rad = np.abs(start[0]-center[0])
+        rad = np.abs(end[0]-start[0])
         if x <= start[0]:
             position = x
         elif y <= end[1]:

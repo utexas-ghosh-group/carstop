@@ -15,14 +15,14 @@ from math import atan2, pi
 class FrontRadar():
     
     def __init__(self,state,realign, noiseLevel=1., maxCommunicationRange=500.,
-                 packetLossRate=0., scope=pi):    
+                 packetLossRate=0., scope=1.):    
         self.state = state
         self.obstacles = []
         self.realign = realign
         self.noiseLevel = noiseLevel
         self.maxCommunicationRange = maxCommunicationRange
         self.packetLossRate = packetLossRate
-        self.scope = scope
+        self.scope = scope * pi
     
 #    def inRange(self,vstate): # a rectangular model
 #        forwardRange = 30.
@@ -38,7 +38,7 @@ class FrontRadar():
         angleOfObject = atan2(vstate.y, vstate.x) + pi/2
         if angleOfObject > pi:
             angleOfObject = angleOfObject - 2*pi
-        return angleOfObject > -self.scope and angleOfObject < self.scope
+        return angleOfObject >= -self.scope and angleOfObject <= self.scope
     
     def addObstacle(self,vstate):
         
@@ -46,8 +46,6 @@ class FrontRadar():
         positionErrorSD = 4. * self.noiseLevel / 2.  # meters
         speedErrorSD = 5.*.447 * self.noiseLevel / 2. # meters/second
         
-        if vstate.vehID == self.state.vehID: # accidentally sensing yourself
-            return
         if distance(self.state, vstate) > self.maxCommunicationRange:
             return
         if not self.inRange(realignV(self.state,vstate)):
