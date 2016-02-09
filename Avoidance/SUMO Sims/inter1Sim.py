@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-last modified 2/3/16
+last modified 2/8/16
 """
 import subprocess, os, math
 import pandas as pd
@@ -14,8 +14,8 @@ import traci
 import traci.constants as tc
 
 ''' put the name of the SUMO config file to use here '''
-CONFIGNAME = "inter1l/inter1lc"
-outputName = 'inter1l/random_c'
+CONFIGNAME = "inter1l/inter1lb"
+outputName = 'inter1l/constant_b'
 outputFolder = os.path.realpath('Results')
 paramFolder = os.path.realpath('Parameters')
 
@@ -99,7 +99,7 @@ def init(iteration = 0, defaultCONFIGNAME = CONFIGNAME):
             respondWithCollision = state.collisionOccurred
             state.collisionOccurred = -1
             state.step = 0
-            output.write(outputFolder+'/'+outputName+str(iteration)+'.csv',
+            output.write(outputFolder+'/'+outputName+'/'+str(iteration)+'.csv',
                          restart=True)
             return  respondWithCollision
 
@@ -156,7 +156,7 @@ def doStep():
             thisv = egov
         else:
             thisv = alterv
-        controllers[v] = Controllers.Inter1Control(v, thisv)
+        controllers[v] = Controllers.Inter1Constant(v, thisv)
         #getController(v, vehicleSetParams[v])
         if controllers[v] is not None:
             if setting.verbose:
@@ -218,13 +218,14 @@ def rndSpeed():
     return uniform(25,45)*.447
 
 if __name__ == "__main__":
-    numiter=200
+    numiter=40
     
     if numiter == 0:
         egov = rndSpeed()
         alterv = rndSpeed()
         init(0)
     else:
+        subprocess.call(['mkdir','-p',outputFolder+"/"+outputName])
         for it in range(numiter):
             egov = rndSpeed()
             alterv = rndSpeed()

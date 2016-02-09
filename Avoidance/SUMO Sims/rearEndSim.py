@@ -9,8 +9,8 @@ from random import uniform
 import collisionCheck
 from subprocess import call
 
-numiter = 500
-outputName = 'random'
+numiter = 30
+outputName = 'rtest'
 
 
 VEHsize = (5,2) # meters, length by width
@@ -55,6 +55,7 @@ if 'lastStart.int' in os.listdir(os.path.realpath('.')):
 else:
     iteration = 1
     params = None
+    call(['mkdir','-p',outputFolder+'/'+options.outputName]) # add folder
 
 ## run iteration
 while iteration <= options.numiter:
@@ -131,7 +132,7 @@ while iteration <= options.numiter:
         Sim.end()
         
         # save iteration information
-        outputFile = outputFolder+'/'+options.outputName+str(iteration)+'.csv'
+        outputFile = outputFolder+'/'+options.outputName+'/'+str(iteration)+'.csv'
         output.columns = outputColumns
         output.to_csv(outputFile, sep=',',header=True,index=False)
         if params is None:

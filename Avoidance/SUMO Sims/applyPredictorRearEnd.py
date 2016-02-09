@@ -2,7 +2,7 @@
 """
 Runs a predictor code and returns the output
 Has the option to run in parallel (batch size > 1)
-1/27/16
+2/8/16
 """
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ sensorFolder = os.path.realpath("Sensor Results")
 outputFolder = os.path.realpath("Analysis")
 paramFolder = os.path.realpath("Parameters")
 
-nsims = 10
+nsims = 30
 batch_size = 5
 
 class WriteFrame:
@@ -39,7 +39,7 @@ results = WriteFrame(['Type', 'noise magnitude',
                       'number of correct safe','early warnings','late warnings'])
 
 options = []
-for moveType in ['constant','random']:
+for moveType in ['rtest']:
     for noiseLevel in [0., 1.]:
         for predictorType in ['movingaverage','Kalman']:
             options += [[moveType, noiseLevel, predictorType]]
@@ -57,10 +57,7 @@ for option in options:
     predictorType = option[2]    
     
     simName = "rearEnd/" + moveType
-    if noiseLevel < 0.01:
-        sensorName = simName + "_" + "ideal" + "_"
-    else:
-        sensorName = simName + "_" + "noise" + "_"
+    sensorName = simName + "_" + str(noiseLevel)
     
     print "running "+sensorName+" with "+predictorType
     
@@ -89,8 +86,10 @@ for option in options:
     if batch_size == 1: # run one file at a time
         for simIndex in range(nsims):
             print "- nsim: " + str(simIndex+1) +" / " +str(nsims)
-            vehicleFile = vehicleFolder + "/" + simName + np.str(simIndex+1) + ".csv"
-            sensorFile = sensorFolder + "/" + sensorName + np.str(simIndex+1) + ".csv"
+            vehicleFile = vehicleFolder + "/" + simName + "/" +\
+                            np.str(simIndex+1) + ".csv"
+            sensorFile = sensorFolder + "/" + sensorName + "/" +\
+                            np.str(simIndex+1) + ".csv"
             
             vehicleData = pd.read_table(vehicleFile,sep=',') # new data read
             try:
@@ -115,10 +114,12 @@ for option in options:
             print "- batch " + str(batch) +" / " +str(nsims)
             processes = []
             
-            for simIndex in range(batch, batch+batch_size):
+            for simIndex in range(batch, min(batch+batch_size, nsims)):
                 
-                vehicleFile = vehicleFolder+"/"+simName+np.str(simIndex+1)+".csv"
-                sensorFile = sensorFolder+"/"+sensorName+np.str(simIndex+1)+".csv"
+                vehicleFile = vehicleFolder + "/" + simName + "/" +\
+                                    np.str(simIndex+1) + ".csv"
+                sensorFile = sensorFolder + "/" + sensorName + "/" +\
+                                    np.str(simIndex+1) + ".csv"
                 
                 vehicleData = pd.read_table(vehicleFile,sep=',') # new data read
                 try:
