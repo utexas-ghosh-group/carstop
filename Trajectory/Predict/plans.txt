@@ -1,0 +1,4 @@
+Get front vehicle information in structure - also, read papers that use front vehicle information
+Code to guess motion - use your old truths
+Code to predict trajectory
+Code to gather necessary road features - adjacent lanes, proximity to junction, junction options, curvature, prior junction info?

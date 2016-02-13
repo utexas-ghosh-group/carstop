@@ -4,11 +4,11 @@ function [closestRoad, closestTrajectory, closestGradient] = ...
 %% testing
 % clear;
 % temp = load('segment_s2nb_2.mat');
-% trajectory = squeeze(temp.timeMatrix(424,1:71,:));
+% trajectory = squeeze(temp.timeMatrix(3,1:71,:));
 % %trajectory = trajectory(37:50,:);
 % clear temp;
 % direction = 'backwards';
-%i=7;
+%i=7
 %%
 
 roadStruct = load('roads_all.mat');

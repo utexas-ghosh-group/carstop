@@ -10,9 +10,11 @@ features:
 	This data should be the same but shifted and rotated.
 	x = subtracted 1,966,000 m
 	y = subtracted 570,000 m
-9:15 lane ID, origin, destination, intersection, section, direction
+9:15 lane ID, origin, destination, intersection, section, direction, movement
 	Same as in original data files
 
+
+preppedData2 also has 16 = lead vehicle ID, 17 = distance to lead vehicle (in meters, center to center distance)
 
 intersection: 2 597.313, 944.629
 1 549.173 843.863

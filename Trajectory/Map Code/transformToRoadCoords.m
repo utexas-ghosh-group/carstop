@@ -2,6 +2,8 @@ clear;
 load('segment_s2nb_2.mat');
 load('roads_all.mat');
 
+importUsefulFunctions();
+
 nobs = size(vehicleMatrix,1);
 
 todo = 1:nobs;
@@ -21,7 +23,7 @@ for obs = todo
     path = squeeze(timeMatrix(obs,beforeRange,:));
     
     % find the road that matches this trajectory
-    [roadBefore, closestTraj, closestGradient] = findClosestRoad(path,'backwards');
+    [roadBefore, closestTraj, closestGradient] = findRoad(path,'backwards');
     
     distance = path - closestTraj;
     %lateral = norm2d(distance); % absolute value

@@ -83,7 +83,7 @@ function [closestTraj, closestGradient, err] = ...
     closestGradient = gradients{bestPath};
     if backwards
         closestTraj = [closestTraj; currentPoint];
-        closestGradient = [closestGradient currentGradient];
+        closestGradient = [closestGradient; currentGradient];
     else
         closestTraj = [currentPoint; closestTraj];
         closestGradient = [currentGradient; closestGradient];

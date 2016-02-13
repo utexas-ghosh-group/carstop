@@ -1,6 +1,7 @@
 make .kml file in Google Earth (if you open this .kml with Google Earth, you'll see the needed format)
-readKml (with correct input .kml)
-gdaltransform -s_srs EPSG:4326 -t_srs EPSG:3497 <unconverted.csv >converted.csv
-generateRoad
-make road_transitions.csv (by hand is probably necessary)
-addTransitions
+run readKml.m (with correct input .kml)
+in command line: gdaltransform -s_srs EPSG:4326 -t_srs EPSG:3497 <unconverted.csv >converted.csv
+run generateRoads.m
+make road_transitions.csv (by hand is probably necessary, pdf in DAQ folder is easy reference)
+run addTransitions.m
+maps can be plotted/checked against vehicle paths in "Map Code" folder

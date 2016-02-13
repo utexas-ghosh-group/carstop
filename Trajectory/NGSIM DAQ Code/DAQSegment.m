@@ -1,19 +1,20 @@
 clear;
+importUsefulFunctions()
 
 % dataset parameters
 idFeature = 1;
 timeFeature = 4; % in milliseconds from some reference time
-oldtrajFeatures = 5:6;  % x and y (in meters, hopefully)
-trajFeatures = 7:8;  % x and y (in meters, hopefully)
-transientFeatures = [9,12:15]; % the descriptor features that can change
-                               % over time, such as lane number
-                               % storing at beginning and at end of traj.
-setFeatures = [10,11]; % the descriptor features that won't change
+oldTrajFeatures = 5:6;
+originFeature = 10;
+destFeature = 11;
+locationFeatures = [9,13,14,2]; % lane, section, direction, frame
+%trajFeatures = 7:8; % x and y (in meters, hopefully)
+trajFeatures = [7,8,16,17];
 
 % timing parameters
-timeToCoverBefore = 70;  % 100ms frames
-timeToCoverAfter = 70;  % 100ms frames, including the current one
-minimumTime = 20;   % trajects with < 2 seconds on either side are not used
+timeToCoverBefore = 100;  % 100ms frames
+timeToCoverAfter = 50;  % 100ms frames, including the current one
+minimumTime = 20;   % trajects with < 4 seconds on either side are not used
 timesteps = timeToCoverBefore + timeToCoverAfter + 1;
 
 % segmentation parameters
@@ -24,38 +25,73 @@ width = 3;
 inSegment = @(coords) inRectangle(coords, pointA, pointB, width);
 segmentName = [3, direction, pointA, pointB];
 
-% center x,y data for each intersection
-intersection = 2;
+% roadList
+roadList = importdata('roadList.txt');
+location2num = @(x,xp,xf) road2num(x(2),x(3),x(1),xp(2),xp(3),xp(1),...
+                            xf(2),xf(3),xf(1),roadList);
 
 % storage
-timeMatrix = zeros(0,timesteps,length(trajFeatures)); %vehicle X time X pos
-vehicleMatrix = zeros(0,length(transientFeatures)*3+length(setFeatures) + 2);
+timeMatrix = zeros(0,timesteps,length(trajFeatures)+1); %vehicle X time X pos
 nTooShortTrajects = 0;
 nTimeSkipTrajects = 0;
 nInterpolations = 0;
 
 %%
-temp = importdata('preppedData.csv');
+temp = importdata('preppedData2.csv');
 
 emergEscape = 0;
 while (size(temp,1) > 0) && (emergEscape < 10000)
     
     % search for data in correct zone
-    coordInSect = find(inSegment(temp(:,5:6)).*(temp(:,14)==direction), 1);
+    coordInSect = find(inSegment(temp(:,oldTrajFeatures)).*(temp(:,14)==direction), 1);
     if isempty(coordInSect)
         emergEscape = 100000;
         break;
     end
-    thisFrame = temp(coordInSect, 2);
+    thisRow = temp(coordInSect, :);
     
     % find the rows that apply to this vehicle
-    rowsOfThisVehicle = (temp(:,idFeature) == temp(coordInSect,idFeature));
-  
+    rowsOfThisVehicle = (temp(:,idFeature) == thisRow(idFeature));
+    
+    % find all locations for this vehicle -> so that start and end of
+    % trajectory can be reliably known
+    allLocations = temp(rowsOfThisVehicle, locationFeatures);
+    originLocation = allLocations(1,:); % add origin
+    originLocation(2) = thisRow(originFeature);
+    allLocations = cat(1, originLocation, allLocations);
+    destLocation = allLocations(end,:); % add destination
+    destLocation(2) = thisRow(destFeature);
+    allLocations = cat(1, allLocations, destLocation);
+    % gather unique locations by finding timepoints where location changes
+    sectionChanges = diff(allLocations(:,2))~=0;
+    laneChanges = (diff(allLocations(:,1))~=0) .* ...
+                       (allLocations(2:end, 2)>0); % only lane changes in section
+    uniqueLocations = cat(1, 1, find(sectionChanges + laneChanges > 0)+1);
+    uniqLocations = allLocations(uniqueLocations,:);
+    % use road2num to assign locations
+    emptyLoc = originLocation*0;
+    locations = zeros(size(uniqLocations,1),1);
+    locations(1) = location2num(uniqLocations(1,:), emptyLoc, emptyLoc);
+    locations(end) = location2num(uniqLocations(end,:), emptyLoc, emptyLoc);
+    for thisloc = 2:size(uniqLocations,1)-1
+        locations(thisloc) = location2num(uniqLocations(thisloc,:),...
+                                          uniqLocations(thisloc-1,:),...
+                                          uniqLocations(thisloc+1,:));
+    end
+    uniqueLocations = uniqueLocations -1;
+    if uniqueLocations(1) == 0
+        uniqueLocations = uniqueLocations(2:end);
+    end
+    if uniqueLocations(end) > sum(rowsOfThisVehicle)
+        uniqueLocations = uniqueLocations(1:end-1);
+    end
+    locationFrames = allLocations(uniqueLocations,4);
+    
     % find rows in the correct time frames
     reject = 0;
     
-    rowsBefore = ((temp(:,2) < thisFrame) .*...
-                  (temp(:,2) >= thisFrame - timeToCoverBefore) .*...
+    rowsBefore = ((temp(:,2) < thisRow(2)) .*...
+                  (temp(:,2) >= thisRow(2) - timeToCoverBefore) .*...
                   rowsOfThisVehicle ) > 0;
     vDataBefore = temp(rowsBefore, :);
     currentLen = size(vDataBefore,1);
@@ -68,8 +104,8 @@ while (size(temp,1) > 0) && (emergEscape < 10000)
         nInterpolations = nInterpolations + 1;
     end
     
-    rowsAfter = ((temp(:,2) > thisFrame) .*...
-                 (temp(:,2) <= thisFrame + timeToCoverAfter) .*...
+    rowsAfter = ((temp(:,2) > thisRow(2)) .*...
+                 (temp(:,2) <= thisRow(2) + timeToCoverAfter) .*...
                  rowsOfThisVehicle ) > 0;
     vDataAfter = temp(rowsAfter, :);
     currentLen = size(vDataAfter,1);
@@ -82,7 +118,7 @@ while (size(temp,1) > 0) && (emergEscape < 10000)
         nInterpolations = nInterpolations + 1;
     end
     
-    vData = cat(1,vDataBefore, temp(coordInSect,:), vDataAfter);
+    vData = cat(1,vDataBefore, thisRow, vDataAfter);
     
     % remove all data from temp
     rowsIncluded = rowsAfter + rowsBefore;
@@ -106,39 +142,16 @@ while (size(temp,1) > 0) && (emergEscape < 10000)
 %     vData = vData(sorter,:);
     
     if ~reject
-    
-    vehicleRow = zeros(1,size(vehicleMatrix,2));
-    featurecount = 1;
-    for vfeat = setFeatures
-        if any(vData(:,vfeat) ~= vData(1,vfeat))
-            disp('origin/dest change');
+        timeRow = zeros(1,timesteps, length(trajFeatures)+1);
+        timeRow(1,:,1:length(trajFeatures)) = vData(:,trajFeatures);
+        for time = 1:timesteps
+            timeRow(1, time, length(trajFeatures)+1) = ...
+                    locations(sum(locationFrames <= vData(time,2))+1);
         end
-        vehicleRow(featurecount) = vData(1, vfeat);
-        featurecount = featurecount + 1;
-    end
-    for vfeat = transientFeatures
-        vehicleRow(featurecount) = vData(2, vfeat);
-        featurecount = featurecount + 1;
-        vehicleRow(featurecount) = vData(timeToCoverBefore+1, vfeat);
-        featurecount = featurecount + 1;
-        vehicleRow(featurecount) = vData(size(vData,1), vfeat);
-        featurecount = featurecount + 1;
-    end
-    vehicleRow(featurecount) = beginningInterpolated;
-    vehicleRow(featurecount+1) = endInterpolated;
-    
-    timeRow = zeros(1,timesteps, length(trajFeatures));
-    timeRow(1,:,:) = vData(:,trajFeatures);
-    
-    timeMatrix = cat(1,timeMatrix, timeRow);
-    vehicleMatrix = cat(1,vehicleMatrix,vehicleRow);
-    emergEscape = emergEscape + 1;
+
+        timeMatrix = cat(1,timeMatrix, timeRow);
+        emergEscape = emergEscape + 1;
     end
 end
 
-% center around each intersection
-load('intersectionCenters.mat');
-timeMatrix(:,:,1) = timeMatrix(:,:,1) - intersectionCenters(intersection,1);
-timeMatrix(:,:,2) = timeMatrix(:,:,2) - intersectionCenters(intersection,2);
-
-save('segment_s3sb_2.mat','timeMatrix','vehicleMatrix','segmentName');
+save('segment_s3sb2.mat','timeMatrix','segmentName');
