@@ -147,12 +147,14 @@ class RoadMap():
     
     
 class OwnSimulator():
-    def __init__(self, roadMap, gui=False, delay = .1, waitOnStart = False):
+    def __init__(self, roadMap, gui, delay = .1, waitOnStart = False):
         self.RM = roadMap
         self.lanes = {}
         self.pos = {}
+        self.offset = {}
         self.delay = delay
-        self.gui = gui        
+        self.gui = gui     
+        self.inProjection = False
         
         if gui:
             self.world = world.World(200, 200, resolution = 5.)
@@ -165,14 +167,17 @@ class OwnSimulator():
     def createVehicle(self, ID, lane, pos=0.):
         self.lanes[ID] = lane
         self.pos[ID] = pos
+        self.offset[ID] = 0.
         
-        if self.gui:
+        if self.gui and not self.inProjection:
             self.world.AddCar(world.Car(ID, *self.RM.getLoc(lane, pos)))
             
-    def moveVehicle(self, ID, lane, pos=None):
+    def moveVehicle(self, ID, lane, pos=None, offset=None):
         self.lanes[ID] = lane
         if not pos is None:
             self.pos[ID] = pos
+        if not offset is None:
+            self.offset[ID] = 0.
         self._guiMoveVehicle(ID)
             
     def moveVehicleAlong(self, ID, dist, turn='nopreference'):
@@ -231,7 +236,7 @@ class OwnSimulator():
         return [self.lanes[ID], self.pos[ID], (x,y), angle]         
             
     def _guiMoveVehicle(self, ID):
-        if self.gui:
+        if self.gui and not self.inProjection:
             x,y,angle = self.RM.getLoc(self.lanes[ID],self.pos[ID])
             self.world.moveCar(ID, x, y, angle)
     
@@ -241,6 +246,9 @@ class OwnSimulator():
         
         if self.gui:
             self.world.removeCar(ID)
+            
+    def offsetVehicle(self, ID, offsetAmt):
+        self.offset[ID] = self.offset[ID] + offsetAmt            
             
     def updateGUI(self):
         if self.gui:
@@ -257,3 +265,11 @@ class OwnSimulator():
             x2,y2,angle = self.RM.getLoc(self.lanes[carID2],self.pos[carID2])
             self.world.drawOtherShape(
                         world.CrashSymbol((x1/2.+x2/2., y1/2.+y2/2.)))
+                    
+    def startProjection(self):
+        self.truestate = [self.lanes, self.pos]
+        self.inProjection = True
+    def endProjection(self):
+        self.lanes = self.truestate[0]
+        self.pos = self.truestate[1]
+        self.inProjection = False
