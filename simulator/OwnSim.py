@@ -146,7 +146,7 @@ class RoadMap():
         return getLinePos(x1,y1,x2,y2, x,y)
     
     
-class OwnSimulator():
+class Simulator():
     def __init__(self, roadMap, gui, delay = .1, waitOnStart = False):
         self.RM = roadMap
         self.lanes = {}
@@ -157,13 +157,47 @@ class OwnSimulator():
         self.inProjection = False
         
         if gui:
-            self.world = world.World(200, 200, resolution = 5.)
+            xdim, ydim = self._findMapSize()
+            self.world = world.World(xdim, ydim, resolution = 5.)
             for road in self.RM.roads.itervalues():
                 roadshape = world.Road((road[0],road[1]),(road[2],road[3]))
                 self.world.AddRoad(roadshape)
-            self.world.AddRoad(world.IntersectionBox((100,100),8))
+            if len(self.RM.intersections) > 0:
+                self.world.AddRoad(self._findIntersectionArea())
             self.world.Start(waitOnStart)
             
+    def _findMapSize(self):
+        roads = self.RM.roads
+        xValues = []
+        yValues = []
+        for road in roads.itervalues():
+            x1,y1,x2,y2 = road
+            wd = 1.5 / ((x2-x1)**2 + (y2-y1)**2)**.5
+            wdx = wd*(y2-y1)
+            wdy = wd*(x2-x1)
+            xValues += [x1 + wdx, x1 - wdx, x2 + wdx, x2 - wdx]
+            yValues += [y1 + wdy, y1 - wdy, y2 + wdy, y2 - wdy]
+        return (max(xValues), max(yValues))
+    
+    def _findIntersectionArea(self):
+        intersections = self.RM.intersections
+        xValues = []
+        yValues = []
+        for inroad, outroad in intersections:
+            x,y,x1,y1 = self.RM.roads[inroad]
+            x2,y2,x,y = self.RM.roads[outroad]
+            xValues += [x1,x2]
+            yValues += [y1,y2]
+        minx = min(xValues)
+        maxx = max(xValues)
+        centerx = (maxx + minx)/2
+        differencex = (maxx - minx)/2
+        miny = min(yValues)
+        maxy = max(yValues)
+        centery = (maxy + miny)/2
+        #differencey = (maxy - miny)/2
+        return world.IntersectionBox((centerx, centery), differencex)
+    
     def createVehicle(self, ID, lane, pos=0.):
         self.lanes[ID] = lane
         self.pos[ID] = pos

@@ -1,6 +1,6 @@
 '''
 This utilizes the tkinter package and the graphics.py code that Sean found
-3/21/16
+3/22/16
 '''
 
 from graphics import *
@@ -149,7 +149,7 @@ class Car(object):
             polygonOptions = {"fill":"yellow", "outline":"", "width":"1"}
             polygonArgs += [polygonOptions]
             self.polygonID = GraphWin.create_polygon(world._window, polygonArgs)
-            textOptions = {"fill":"black","text":self.ID}
+            textOptions = {"fill":"black","text":self.ID[:2]}
             #"font": ("helvetica", 12, "normal")
             self.textID = world._window.create_text(textPoints,textOptions)
             self.onGrid = True
@@ -195,6 +195,7 @@ class IntersectionBox(Road):
         curveBRbbox = (repoints[0][0], repoints[0][1],
                          repoints[1][0], repoints[1][1])
         world._window.create_oval(curveBRbbox, curveOptions)
+        
         
 class CrashSymbol(object):
     def __init__(self, center, r1 = 2., r2 = 1.):
