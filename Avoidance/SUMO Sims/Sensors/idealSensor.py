@@ -4,7 +4,7 @@
 Gives a vehicle complete knowledge about the others.
 Note that it realigns them as if this vehicle has
 position (0,0) and angle 0.
-Last modified 1/27/16
+Last modified 3/25/16
 """
 #import sys, os
 #sys.path.append(os.path.dirname(__file__)[:-len("/Sensors")])
@@ -22,7 +22,7 @@ class IdealSensor():
         if self.realign:
             self.obstacles.append(realignV(self.state, vstate))
         else:
-            self.obstacles.append(vstate)
+            self.obstacles.append(vstate.copy())
     
     def getObstacles(self):
         return self.obstacles
