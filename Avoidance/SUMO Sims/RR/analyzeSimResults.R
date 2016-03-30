@@ -5,16 +5,16 @@
 setwd("/home/motrom/Documents/carstop/Avoidance/SUMO Sims/RR")
 
 #for(PARAM.loss.rate in c(0.,.5)){
-number.of.files = 2000
+number.of.files = 5000
 PARAM.loss.rate = 0.   # ratio of communication packets lost (0 to 1)  [0, .33, .67]
-PARAM.randomization = 0.  # total range of (uniform) noise applied to parameters [0, .25, .5, 1]
+PARAM.randomization = 1.  # total range of (uniform) noise applied to parameters [0, .25, .5, 1]
 PARAM.estimationNoise = PARAM.randomization
-PARAM.rsuSpacing = 10
-PARAM.maxCommDistance = 595
+#PARAM.sensor = 'V2V'
+PARAM.sensor = 'V2Ilong_500_1100'
 
 VEH.overtake.accel.bounds = c(.305, 2.5)
 VEH.trp.bounds = c(1, 4)
-VEH.sensed.position.range = 2. # 4
+VEH.sensed.position.range = .5 # 4
 VEH.sensed.speed.range = .5 # 1.5
 VEH.sensed.acceleration.range = .25 # 
 VEH.length = 5.8
@@ -33,15 +33,15 @@ headway.actual = headway.trp = numeric(number.of.files)
 min.warning.time = numeric(number.of.files)
 passbackTimes = numeric(number.of.files) # neww
 
-for(file.num in 0:(number.of.files - 1)){
+for(file.num in 1:number.of.files){
   
 #file.num = 5
-parameters = unlist(allParameters[file.num+1,])
+parameters = unlist(allParameters[file.num,])
 trp = parameters["Perception.Response.Time"]
 #data <- read.csv(paste("results/simData",file.num,".csv", sep=""), header=TRUE)
 #data = data[, c(1,2,4,7,8)] #Time, Vehicle.ID, Position.x, Speed, Acceleration
 #names(data)[3] = "Position"
-data <- read.csv(paste("../Results/RR/",file.num+1,".csv", sep=""), header=TRUE)
+data <- read.csv(paste("../Results/RR/",file.num,".csv", sep=""), header=TRUE)
 data = data[,c(1,2,3,6,7)] # time, vehID, x, speed, Acceleration
 names(data) = c("Time","Vehicle.ID","Position","Speed","Acceleration")
 
@@ -94,13 +94,13 @@ if(is.na(invalid)){
   invalid = TRUE
 }
 
-valid[file.num+1] = !invalid
+valid[file.num] = !invalid
 
 if(invalid){
-  headway.actual[file.num + 1] = NA
-  headway.trp[file.num + 1] = NA
-  min.warning.time[file.num + 1] = NA
-  passbackTimes[file.num + 1] = NA  # neww
+  headway.actual[file.num] = NA
+  headway.trp[file.num] = NA
+  min.warning.time[file.num] = NA
+  passbackTimes[file.num] = NA  # neww
 }
 else{
   
@@ -141,8 +141,8 @@ for(current.data in time.sorted.data){
   }
 }
 if(is.null(oncomingHeadway)){ oncomingHeadway=0}
-headway.actual[file.num+1] = oncomingHeadway
-passbackTimes[file.num+1] = passbackTime
+headway.actual[file.num] = oncomingHeadway
+passbackTimes[file.num] = passbackTime
 
 if(TRUE){
 ## now analyze communications file
@@ -151,8 +151,7 @@ if(TRUE){
 #data = data[, c(11,2,4,7,8,1)] #Time.Received, Vehicle.ID, Position.x, Speed, Acceleration, Time.Sent
 #names(data)[1] = "Time"
 #names(data)[3] = "Position"
-data <- read.csv(paste("../Sensor Results/RR/RR_",PARAM.rsuSpacing,"_",
-                        PARAM.maxCommDistance,"/",file.num+1,
+data <- read.csv(paste("../Sensor Results/RR/",PARAM.sensor,"/",file.num,
                         ".csv", sep=""), header=TRUE)
 data["Time.Sent"] = data["Time.Sent"] - VEH.prep.time
 data["Time"] = data["Time"] - VEH.prep.time
@@ -185,21 +184,21 @@ oncomingCommData = data[data["Sender.ID"] == "Oncoming",]
 
 # I don't know why I was rounding these before...
 #if (sum(leadCommData["Time"] < round(trp-.04999,1)) == 0){
-#  commFailed[file.num+1]=TRUE
+#  commFailed[file.num]=TRUE
 #}
 #if (sum(oncomingCommData["Time"] < round(trp-.04999,1)) == 0){
-#  commFailed[file.num+1]=TRUE
+#  commFailed[file.num]=TRUE
 #}
 if (nrow(leadCommData)==0 || sum(leadCommData["Time"] < trp) == 0){
-  commFailed[file.num+1]=TRUE
+  commFailed[file.num]=TRUE
 }
 if (nrow(oncomingCommData)==0 || sum(oncomingCommData["Time"] < trp) == 0){
-  commFailed[file.num+1]=TRUE
+  commFailed[file.num]=TRUE
 }
 
-if(commFailed[file.num+1]){
-  headway.trp[file.num + 1] = 100
-  min.warning.time[file.num+1] = 0
+if(commFailed[file.num]){
+  headway.trp[file.num] = 100
+  min.warning.time[file.num] = 0
 } else {
   
 # for cases where a vehicle has not been detected,
@@ -239,7 +238,7 @@ trp.data["Passing","Acceleration"] = 0 # should be fine assuming this is perfect
   trp.data["Oncoming",] = getFutureState(trp.data["Oncoming",], trp - trp.data["Oncoming","timer"],
                                              opposite.dir = TRUE)
 trp.data["Passing","Acceleration"] = passingAccelGuess
-headway.trp[file.num + 1] = headways2(trp.data[,-4])
+headway.trp[file.num] = headways2(trp.data[,-4])
 
 # now check various timesteps
 guessedTrp = randomInRange(trp, PARAM.estimationNoise, VEH.trp.bounds)
@@ -286,7 +285,7 @@ while((currentTime < trp) && (warningTime <= 0)){
   }
   currentTime = currentTime + timestepOfWarning
 }
-min.warning.time[file.num+1] = warningTime
+min.warning.time[file.num] = warningTime
 
 }
 }
@@ -330,8 +329,8 @@ names(DataTable) <- gsub("\\.", " ", names(DataTable))
 row.names(DataTable) = NULL
 
 # save in file
-csvname = paste("../Analysis/RR/spacing",PARAM.rsuSpacing,"_sensors",PARAM.randomization,
+csvname = paste("../Analysis/RR/",PARAM.sensor,"_sensors",PARAM.randomization,
                 "_estimation",PARAM.estimationNoise,".csv",sep="")
-#csvname = paste("../Analysis/RR/spacing",PARAM.rsuSpacing,"_loss",PARAM.loss.rate,".csv",sep="")
+#csvname = paste("../Analysis/RR/",PARAM.sensor,"_loss",PARAM.loss.rate,".csv",sep="")
 write.csv(DataTable, file=csvname, row.names = FALSE)
 #}

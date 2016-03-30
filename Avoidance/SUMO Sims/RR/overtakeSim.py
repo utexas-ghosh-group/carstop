@@ -7,7 +7,7 @@ Overtaking scenario
 simulatorFolder = '../../../simulator'
 outputFolder = '../Results/RR'
 parametersFile = 'simParameters.csv'
-numsims = 2000
+numsims = 5000
 
 
 import sys,os
@@ -39,7 +39,7 @@ class Output:
         else:
             self.df = self.df.append([newrow])
     def write(self, fileName, restart=False):
-        self.df.columns =  self.colnames
+        self.df.columns = self.colnames
         self.df.to_csv(fileName, sep=',', header=True, index=False)
         if restart:
             self.df = None
@@ -115,7 +115,7 @@ for simIndex in range(numsims):
         sim.updateGUI()
         continueSim &= vehicleLeft == 0 # at least one vehicle exits sim
         continueSim &= time < 30. # shouldn't take this long
-        continueSim &= overtakeNotComplete
+        continueSim &= (time <= parameters['tpr']+.1 or leadHeadway <= 1.1)
         #continueSim &= leadHeadway <= 1.4 # for better GUI
     
     sim.end()

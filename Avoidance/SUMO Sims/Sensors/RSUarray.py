@@ -3,7 +3,7 @@
 3/28/16
 """
 import sys, os
-from numpy import arctan2, pi
+from numpy import arctan2, pi, cos, sin
 from pandas import Series
 import random
 from usefulMethods import realignV, distance
@@ -11,7 +11,7 @@ sys.path.append(os.path.realpath(__file__)[:-len("/Sensors/RSUarray.py")])
 
 class RSUarray():
     def __init__(self, state, realign, units, noiseLevel=0., packetLossRate=0.,
-                 maxCommunicationRange=600.):
+                 maxCommunicationRange=600., wideBeam = False):
         self.state = state
         self.obstacles = []
         self.realign = realign
@@ -19,12 +19,19 @@ class RSUarray():
         self.noiseLevel = noiseLevel
         self.maxCommunicationRange = maxCommunicationRange
         self.packetLossRate = packetLossRate
+        self.wideBeam = wideBeam
         
     def _withinRSUrange(self, unit, vstate):
         difference = (vstate.x - unit[0], vstate.y - unit[1])
         distance = (difference[0]**2+difference[1]**2)**.5
         angle = arctan2(difference[1],difference[0])
-        return distance < 7.5 and abs(angle - unit[2]) < pi/4
+        if self.wideBeam:
+            return distance < 7.1 and abs(angle - unit[2]) < pi/4
+        else:
+            anglevector = (cos(unit[2]), sin(unit[2]))
+            distance = difference[0]*anglevector[0]+difference[1]*anglevector[1]
+            sideways = abs(difference[0]*anglevector[1]-difference[1]*anglevector[0])
+            return distance < 200. and sideways < 2.
             
         
     def addObstacle(self, vstate):

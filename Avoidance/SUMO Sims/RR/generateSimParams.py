@@ -110,7 +110,7 @@ class Output:
 
 ## main code here
 if __name__ == "__main__":
-    numiter = 2000
+    numiter = 5000
  
     forSims = Output(['tpr','Passing Position','Lead Position','Oncoming Position',
                       'Passing Speed','Lead Speed','Oncoming Speed',
