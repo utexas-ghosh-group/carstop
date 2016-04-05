@@ -1,11 +1,12 @@
 """
-3/21/16
+4/5/16
 """
 # -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
 import time
 import collisionCheck
+from collisionHull import minTTC
 from Qsimformat import formatState
 from QsimInit import initialize
 ### import QTableIndex
@@ -14,7 +15,7 @@ from Agent import updateQvalue
 
 import sys,os
 sys.path.append(os.path.realpath('../../simulator'))
-from OwnSim import OwnSimulator as Simulator
+from OwnSim import Simulator
 from OwnSim import RoadMap
 
 numiter = 1
@@ -67,8 +68,9 @@ intersections   =    [['1i_0','3o_0'] , #['1i_0','2o_1'] ,
                       ['4i_0','3o_0'] , ['4i_1','2o_1'] ]  
 roadMap = RoadMap(roads, intersections)
 
-intersectionInfo = pd.read_csv('collisionsFile_OwnSim.csv',header=0)
-    
+#intersectionInfo = pd.read_csv('collisionsFile_OwnSim.csv',header=0)
+intersectionInfo = pd.read_csv('collisionsFile_Quad.csv',header=0) 
+   
 def splitRoad(lane):
     if len(lane)==9: # internal lane for intersection
         #inroute,ingrade,inlane = splitRoad(lane[:4])
@@ -151,21 +153,33 @@ def gatherStateInfo(cars, trajectories, carID):
     tNV = 100
     closestCar = -1
     secondTNV = 100
-    for crossing in trajectories[carID]: 
-        altRoad, beginTime, endTime = crossing
+    for crossing in trajectories[carID]:
+        altRoad = crossing[0]
+        #beginTime, endTime = crossing[1:]
+        egospeed,egodist = crossing[1:3]
+        egohull = crossing[3:]        
         collideVehicles = (cars['status']==0)
         collideVehicles = collideVehicles & ((cars['ilane']==altRoad) > 0)
         for altcar in np.where(collideVehicles)[0]:
             for altcrossing in trajectories[altcar]:
-                origRoad,altbeginTime,altendTime = altcrossing
+                origRoad = altcrossing[0]
                 if origRoad == car['ilane']:
-                    if endTime > altbeginTime and altendTime > beginTime:
-                        if beginTime < tNV:
-                            secondTNV = tNV
-                            tNV = beginTime
-                            closestCar = altcar
-                        elif beginTime < secondTNV:
-                            secondTNV = beginTime
+#                    altbeginTime,altendTime = altcrossing[1:]
+#                    ttc = 100
+#                    if endTime > altbeginTime and altendTime > beginTime:
+#                        ttc = beginTime
+                    altspeed,altdist = altcrossing[1:3]
+                    althull = altcrossing[:2:-1]
+                    combinedHull = list(((egohull[i],althull[i]) for i in
+                                            range(len(egohull))))
+                    ttc = minTTC(combinedHull,[egospeed,altspeed],
+                                               [egodist,altdist], margin=.3)
+                    if ttc < tNV:
+                        secondTNV = tNV
+                        tNV = ttc
+                        closestCar = altcar
+                    elif ttc < secondTNV:
+                        secondTNV = ttc                          
     carUpdate['Time to Crossing Car'] = tNV
     carUpdate['Crossing Car'] = closestCar
     carUpdate['Time to 2nd Crossing Car'] = secondTNV
@@ -353,7 +367,7 @@ while iteration <= numiter:
     maxTime = 100 # seconds
        
     # start simulator
-    Sim = Simulator(roadMap, gui = True, delay = .01)    
+    Sim = Simulator(roadMap, gui = True, delay = .2)    
 
     ## run simulation
     while ttime < maxTime and np.any(cars['status']<=0):
@@ -451,6 +465,8 @@ while iteration <= numiter:
                     cars.loc[altID, 'status'] = 2 + carID
                     collisionCount += 2
                     Sim.addCrashSymbol(str(carID), str(altID))
+                    print "found a double lane-change collision"
+                    print "shouldn't be happening anymore!!"
         
         # gather when the vehicles reach potential collision points
         trajectories = {}
@@ -467,18 +483,18 @@ while iteration <= numiter:
             
             trajectory = []
             for crossIndex in range(intersectionInfo.shape[0]):
-                thisCross = intersectionInfo.iloc[24]
                 thisCross = intersectionInfo.iloc[crossIndex]
-                aa = thisCross['lane']
-                bb = car['ilane']
-                if thisCross['lane'] == car['ilane'] and (
-                        thisCross['end_lp'] > initDist):
-                    timeToCrossingStart = (thisCross['begin_lp'] - 
-                                            initDist) / car['speed']
-                    timeToCrossingEnd = (thisCross['end_lp'] - 
-                                            initDist) / car['speed']
-                    trajectory += [[thisCross['lane2'],
-                                    timeToCrossingStart, timeToCrossingEnd]]
+                if thisCross['lane'] == car['ilane']:
+#                   if thisCross['end_lp'] > initDist:
+#                      timeToCrossingStart = (thisCross['begin_lp'] - 
+#                                             initDist) / car['speed']
+#                      timeToCrossingEnd = (thisCross['end_lp'] - 
+#                                               initDist) / car['speed']
+#                      trajectory += [[thisCross['lane2'],
+#                                    timeToCrossingStart, timeToCrossingEnd]]
+                    trajectory += [[thisCross['lane2'],car['speed'],initDist,
+                                    thisCross['p1'],thisCross['p2'],
+                                    thisCross['p3'],thisCross['p4']]]
             trajectories[carID] = trajectory
          
          
@@ -526,14 +542,15 @@ while iteration <= numiter:
         for carID in carsToUpdate: # have to redo this to reset all state variables
             agents[carID].state_space(*formatState(Qstates[carID]))
             printString = "car "+str(carID)
-            printString += " NTI "+str(formatState(Qstates[carID]).iloc[7])+" turn "+str(formatState(Qstates[carID]).iloc[2])            
+            printString += " NTI "+str(formatState(Qstates[carID]).iloc[7])+\
+                            " turn "+str(formatState(Qstates[carID]).iloc[2])            
             printString += " cross "+str(Qstates[carID]['Time to Crossing Car'])
             printString += " ahead "+str(Qstates[carID]['Time to Ahead Car'])
             printString += " TTNV "+str(formatState(Qstates[carID]).iloc[7])
             printString += " Speed "+str(formatState(Qstates[carID]).iloc[4])
             
             #printString += " behind "+str(Qstates[carID]['Time to Behind Car'])
-            #print printString
+            print printString
                        
         ## make actions
         carsThatAct = cars['status'] == 0
@@ -552,20 +569,38 @@ while iteration <= numiter:
                 laneChange = 0;
             printString = "car action "+str(carID)+": lane "+str(int(laneChange))
             printString += " speed "+str(int(speedChange))+" turn "+str(int(turn))
-            
             #print printString
             #cars['indexA'][carID] = indexA
             
-            if laneChange>0:
-                newlane = makeRoad(route,grade,1-ln)
-                Sim.moveVehicle(str(carID), newlane, car['lanepos'])
-                cars.loc[carID,'lane'] = newlane
+            offset = Sim.offset[str(carID)]
+            maxChange = 1.
+            if laneChange>0 or cars.loc[carID,'lanechanged']>0:
                 cars.loc[carID,'lanechanged'] = 1
+                newlane = None
+                newoffset = None
+                if ln == 1: # left lane
+                    Sim.offsetVehicle(str(carID), maxChange)
+                    if offset + maxChange > 3.35/2.: # crossed to right lane
+                        crossed = 0
+                        newlane = makeRoad(route, grade, 0)
+                        newoffset = offset + maxChange - 3.35
+                        cars.loc[carID,'lanechanged'] = 0
+                else: # right lane
+                    Sim.offsetVehicle(str(carID),-maxChange)
+                    if offset - maxChange < -3.35/2.: # crossed to left lane
+                        newlane = makeRoad(route, grade, 1)
+                        newoffset = offset - maxChange + 3.35
+                        cars.loc[carID,'lanechanged'] = 0
+                if not newlane is None:
+                    Sim.moveVehicle(str(carID), newlane, car['lanepos'], offset=newoffset)
+                    cars.loc[carID,'lane'] = newlane
                 cars.loc[carID,'changex'] = car['x']
                 cars.loc[carID,'changey'] = car['y']
                 cars.loc[carID,'changeangle'] = car['angle']
             else:
-                cars.loc[carID,'lanechanged'] = 0
+                #cars.loc[carID,'lanechanged'] = 0
+                # head towards center of lane
+                Sim.offsetVehicle(str(carID), min(max(-offset, -maxChange),maxChange))
                 
             speedChange = [0,-10.,10.][int(speedChange)]/MS2KPH            
             cars.loc[carID,'speed'] = min(max(car['speed']+speedChange, 0.),60./MS2KPH)
@@ -578,7 +613,7 @@ while iteration <= numiter:
                 cars.loc[carID,'status'] = 1
                 WrongPath = WrongPath + int(route != splitRoad(car['dest'])[0])
         
-        Sim.updateGUI()
+        Sim.updateGUI(allowPause=True)
         ttime += 0.1
 
     # finish step
