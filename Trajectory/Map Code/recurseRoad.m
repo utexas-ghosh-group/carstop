@@ -1,7 +1,8 @@
-function [closestTraj, closestGradient, err] = ...
-        recurseRoad(trajectory, segment, roadNum, segmentNum, err,...
+function [closestTraj, closestGradient, err, roadNums, segmentNums] = ...
+        recurseRoad(trajectory, segment, roadNums, segmentNums, err,...
                     minErr, nPoints, backwards, alreadySplitList)
 % assumes global 'roads' , 'transitions'
+% 4/7/16 updating so that it stores each road
 
     nLeft = size(trajectory,1);
     if backwards
@@ -33,6 +34,8 @@ function [closestTraj, closestGradient, err] = ...
     end
 
     % continue
+    roadNum = roadNums(length(roadNums));
+    segmentNum = segmentNums(length(segmentNums));
     if backwards
         nextPoint = trajectory(size(trajectory,1),:);
         segment = shortenRoad(segment, currentPoint, 'before');
@@ -55,24 +58,27 @@ function [closestTraj, closestGradient, err] = ...
         end
     end
     splitList = cat(1, alreadySplitList, include);
-    
 
     
     % calculate all next segments
     recurseFunction = @(i) recurseRoad(trajectory, nextSegments(i,:), ...
         nextRoadNums(i), nextSegNums(i), err, minErr, nPoints, ...
         backwards, []);
-    [trajectories, gradients, errors] = arrayfun(recurseFunction, ...
-                                include, 'UniformOutput',0);
+    [trajectories, gradients, errors, newRoadNums, newSegmentNums] = ...
+                    arrayfun(recurseFunction, include, 'UniformOutput',0);
     
     % calculate current segment, if still useful
-    if length(splitList) < length(nextSegNums) 
-        [curTraj, curGrad, curEr] = recurseRoad(trajectory, segment, ...
-        roadNum, segmentNum, err, minErr, nPoints, backwards, splitList);
+    if length(splitList) < length(nextSegNums)
+        alreadySplitList = splitList;
+        [curTraj, curGrad, curEr, curRoadNum, curSegmentNum] = ...
+                recurseRoad(trajectory, segment, roadNum, segmentNum, ...
+                err, minErr, nPoints, backwards, alreadySplitList);
         addCurrent = length(include)+1;
         trajectories{addCurrent} = curTraj;
         gradients{addCurrent} = curGrad;
         errors{addCurrent} = curEr;
+        newRoadNums{addCurrent} = curRoadNum;
+        newSegmentNums{addCurrent} = curSegmentNum;
     end
                             
     
@@ -81,12 +87,23 @@ function [closestTraj, closestGradient, err] = ...
     [err, bestPath] = min(errors);
     closestTraj = trajectories{bestPath};
     closestGradient = gradients{bestPath};
+    roadNums = newRoadNums{bestPath};
+    segmentNums = newSegmentNums{bestPath};
     if backwards
         closestTraj = [closestTraj; currentPoint];
         closestGradient = [closestGradient; currentGradient];
+        %if (roadNums(length(roadNums)) ~= roadNum) ||...
+        %        (segmentNums(length(segmentNums)) ~= segmentNum)
+            roadNums = [roadNums; roadNum];
+            segmentNums = [segmentNums; segmentNum];
+        %end
     else
         closestTraj = [currentPoint; closestTraj];
         closestGradient = [currentGradient; closestGradient];
+        %if (roadNums(1) ~= roadNum) || (segmentNums(1) ~= segmentNum)
+            roadNums = [roadNum; roadNums];
+            segmentNums = [segmentNum; segmentNums];
+        %end
     end
 end
 
@@ -101,7 +118,7 @@ function [nextSegments, nextRoadNums, nextSegNums] = ...
     if segmentNum > 1    % previous segment from same road
         nextRoadNums = roadNum;
         nextSegNums = segmentNum - 1;
-        nextSegments = thisRoad(nextRoadNums,:);
+        nextSegments = thisRoad(nextSegNums,:);
         
     elseif any(transitions(:,roadNum))  % check incoming roads
         nextRoadNums = find(transitions(:,roadNum));
@@ -109,7 +126,7 @@ function [nextSegments, nextRoadNums, nextSegNums] = ...
         nextSegments = zeros(0,5);
         for i = nextRoadNums
             thisRoad = roads(i).segments;
-            thisSegment = size(roads(i).segments,1);
+            thisSegment = size(thisRoad,1);
             nextSegNums = cat(1, nextSegNums, thisSegment);
             nextSegments = cat(1, nextSegments, thisRoad(thisSegment,:));
         end
@@ -130,7 +147,7 @@ function [nextSegments, nextRoadNums, nextSegNums] = ...
     if segmentNum < size(thisRoad,1) % next segment from same road
         nextRoadNums = roadNum;
         nextSegNums = segmentNum + 1;
-        nextSegments = thisRoad(nextRoadNums,:);
+        nextSegments = thisRoad(nextSegNums,:);
         
     elseif any(transitions(roadNum,:)) % next roads
         nextRoadNums = find(transitions(roadNum,:));
@@ -138,7 +155,8 @@ function [nextSegments, nextRoadNums, nextSegNums] = ...
         nextSegments = zeros(0,5);
         for i = nextRoadNums
             thisRoad = roads(i).segments;
-            thisSegment = size(roads(i).segments,1);
+            %thisSegment = size(roads(i).segments,1); %?
+            thisSegment = 1;
             nextSegNums = cat(1, nextSegNums, thisSegment);
             nextSegments = cat(1, nextSegments, thisRoad(thisSegment,:));
         end

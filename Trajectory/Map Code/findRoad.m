@@ -1,6 +1,6 @@
 function [closestRoad, closestTrajectory, closestGradient] = ...
     findRoad(trajectory, direction)
-
+% 4/7/16
 %% testing
 % clear;
 % temp = load('segment_s2nb_2.mat');
@@ -8,7 +8,7 @@ function [closestRoad, closestTrajectory, closestGradient] = ...
 % %trajectory = trajectory(37:50,:);
 % clear temp;
 % direction = 'backwards';
-%i=7
+% i=7
 %%
 
 roadStruct = load('roads_all.mat');
@@ -43,11 +43,11 @@ for i = 1:nRoads
     [bestFP,chosenSegment] = min(distances);
     
     if bestFP <= lowestError   % otherwise not worth checking out
-        [outTraj, outGrad, outError] = recurseRoad(trajectory, ...
+        [outTraj, outGrad, outError, outRoads, ~] = recurseRoad(trajectory, ...
             road(chosenSegment,:), i, chosenSegment, 0, lowestError, ...
             nPoints, backwards, []);
         if outError < lowestError   % new minimum!
-            closestRoad = i;
+            closestRoad = outRoads;
             closestTrajectory = outTraj;
             closestGradient = outGrad;
             lowestError = outError;
