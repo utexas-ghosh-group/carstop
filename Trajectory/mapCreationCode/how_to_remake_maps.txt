@@ -4,4 +4,5 @@ in command line: gdaltransform -s_srs EPSG:4326 -t_srs EPSG:3497 <unconverted.cs
 run generateRoads.m
 make road_transitions.csv (by hand is probably necessary, pdf in DAQ folder is easy reference)
 run addTransitions.m
+run addAdjacencies.m
 copy roads_all.mat to the "Map Code" folder, where you can plot with plotMap.m

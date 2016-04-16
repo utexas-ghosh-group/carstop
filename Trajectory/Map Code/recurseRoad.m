@@ -16,7 +16,7 @@ function [closestTraj, closestGradient, err, roadNums, segmentNums] = ...
     % add this point and recalculate error
     [currentPoint, currentGradient] = closestPoint(segment, point);
     currentDistance = norm(point - currentPoint);
-    err = calculateError(err, currentDistance, nLeft, nPoints);
+    err = recurseroad_calculateError(err, currentDistance, nLeft, nPoints);
     
     
     % check if finished

@@ -19,8 +19,13 @@ timesteps = timeToCoverBefore + timeToCoverAfter + 1;
 
 % segmentation parameters
 direction = 4;      % 1=E 2=N 3=W 4=S
-pointA = [-11,270];
-pointB = [2,268.5];
+% pointA = [-11,270];
+% pointB = [2,268.5];
+% gradAB = pointB - pointA;
+% pointA = pointA + [gradAB(2),-gradAB(1)];
+% pointB = pointB + [gradAB(2),-gradAB(1)];
+pointA = [626,1044];
+pointB = [640,1034];
 width = 3;
 inSegment = @(coords) inRectangle(coords, pointA, pointB, width);
 segmentName = [3, direction, pointA, pointB];
@@ -43,7 +48,7 @@ emergEscape = 0;
 while (size(temp,1) > 0) && (emergEscape < 10000)
     
     % search for data in correct zone
-    coordInSect = find(inSegment(temp(:,oldTrajFeatures)).*(temp(:,14)==direction), 1);
+    coordInSect = find(inSegment(temp(:,7:8)).*(temp(:,14)==direction), 1);
     if isempty(coordInSect)
         emergEscape = 100000;
         break;
@@ -154,4 +159,4 @@ while (size(temp,1) > 0) && (emergEscape < 10000)
     end
 end
 
-save('segment_s3sb2.mat','timeMatrix','segmentName');
+save('segment_s3sb3.mat','timeMatrix','segmentName');

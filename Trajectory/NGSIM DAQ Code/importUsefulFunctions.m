@@ -1,3 +1,3 @@
 function importUsefulFunctions()
-	addpath('/home/motro/Documents/Projects/CarStop/Trajectory/Useful Functions')
+	addpath('/home/motrom/Documents/carstop/Trajectory/Useful Functions')
 end

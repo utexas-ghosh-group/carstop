@@ -1,6 +1,6 @@
 function [closestRoad, closestTrajectory, closestGradient] = ...
     findRoad(trajectory, direction)
-% 4/7/16
+% 4/10/16
 %% testing
 % clear;
 % temp = load('segment_s2nb_2.mat');
@@ -11,12 +11,7 @@ function [closestRoad, closestTrajectory, closestGradient] = ...
 % i=7
 %%
 
-roadStruct = load('roads_all.mat');
 global roads;
-roads = roadStruct.roads;
-global transitions;
-transitions = roadStruct.transitions;
-clear roadStruct;
 
 nPoints = size(trajectory, 1);
 nRoads = length(roads);
