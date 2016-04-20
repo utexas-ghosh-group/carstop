@@ -77,7 +77,10 @@ class Agents(object):
 #        self.distance_to_car_of_interest =  DistancetoToCarOfInterest
         self.state= self.TTNV + 4* self.speed + 4*7*self.OnGrid + 4*7*2*self.AdjFreeLane + 4*7*2*3*self.collision +\
                     4*7*2*3*2*self.RLane + 4*7*2*3*2*2*self.Turn + 4*7*2*3*2*2*3*self.Lane+ 4*7*2*3*2*2*3*2*self.Location 
-    def Action_training(self, Qtable):
+    def Action_training(self, Qtable, trainingNotTesting):
+        choiceProbabilities = [1., 0.]
+        if trainingNotTesting:
+            choiceProbabilities = [0.67, 0.33]
         if (self.OnGrid==1 and self.collision==0):
             if (self.Location==0 or self.Location==2):
                 if (self.RLane==1):       # this can be changed as random later down the road to leave the car to do some manouver 
@@ -163,7 +166,7 @@ class Agents(object):
                     #else:
                     #    Actionp[0] = self.LaneChange
                     Actionp[1] = (ActionpInd)%3
-                    set_choose = np.random.choice([0,1],p=[.67,0.33])
+                    set_choose = np.random.choice([0,1],p=choiceProbabilities)
                     if (set_choose == 0):
                         self.Action = Actionp
                     else:
@@ -211,7 +214,7 @@ class Agents(object):
                 if (ActionpInd//9==1):
                     Actionp[0] = (ActionpInd - 9)//3
                     Actionp[1] = (ActionpInd - 9)%3
-                    set_choose = np.random.choice([0,1],p=[.67,0.33]) ##rrak
+                    set_choose = np.random.choice([0,1],p=choiceProbabilities) ##rrak
                     if (set_choose == 0):
                         self.Action = Actionp
                     else:

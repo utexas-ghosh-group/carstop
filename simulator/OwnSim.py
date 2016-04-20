@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 replacing SUMO
-3/21/16
+3/31/16
 """
 import numpy as np
 import pandas as pd
@@ -20,13 +20,8 @@ def getLineLoc(x1,y1,x2,y2,dist):
     angle = np.arctan2(y2-y1,x2-x1)
     return (x,y,angle)
     
-def getLinePos(x1,y1,x2,y2,x,y):
-    length = getLineLength(x1,y1,x2,y2)
-    pos = (x-x1)/(x2-x1)*length
-    return pos
-    
 def sumoAngle(pos, dist): # this is close to how SUMO gets its angles
-    return pos/dist*np.pi/2 - np.sin(pos/dist*2*np.pi)*.2    
+    return pos/dist*np.pi/2 - np.sin(pos/dist*2*np.pi)*.2
     
 def getCircleLength(x1in, y1in, x2in, y2in, x1out, y1out, x2out, y2out):
     x1 = x2in
@@ -80,26 +75,6 @@ def getCircleLoc(x1in, y1in, x2in, y2in, x1out, y1out, x2out, y2out, dist):
         angle = theta - relativeAngle
     return (xf,yf,angle)
 
-def getCirclePos(x1in, y1in, x2in, y2in, x1out, y1out, x2out, y2out, x, y):
-    x1 = x2in
-    y1 = y2in
-    x2 = x1out
-    y2 = y1out
-    theta = np.arctan2(y2in-y1in,x2in-x1in)
-    pi = np.pi
-    
-    r = (((y2-y1)**2.+(x2-x1)**2.) /2)**.5
-    bend = (y2-y1)*np.cos(theta) - (x2-x1)*np.sin(theta)
-    if bend > 0:
-        xr = x1 + r*np.cos(theta + pi/2)
-        yr = y1 + r*np.sin(theta + pi/2)
-        angle = np.arctan2(y-yr,x-xr) - theta + pi/2
-    else:
-        xr = x1 + r*np.cos(theta - pi/2)
-        yr = y1 + r*np.sin(theta - pi/2)
-        angle = np.arctan2(y-yr,x-xr) - theta - pi/2
-    return angle * r 
-
 
 class RoadMap():
     def __init__(self, roads, intersections):
@@ -108,42 +83,53 @@ class RoadMap():
         self.roads = roads
         self.intersections = intersections
         
+    # for two road names, find the name of the intersection road between them
     def combineRoad(self, inroad, outroad):
         if any(list(inroad==i and outroad==j for i,j in self.intersections)):
             return inroad + '_' + outroad
         return None
         
+    # determine whether a road name belongs to an original road or an intersection
     def isIntersection(self, lane):
         return len(lane) == 9
+        
+    # given an intersection road name, return the two original road names
+    def splitIntersection(self, intersectionRoad):
+        middleInd = int(len(intersectionRoad)/2)
+        if intersectionRoad[middleInd] == '_':
+            return [intersectionRoad[:middleInd], intersectionRoad[middleInd+1:]]
            
     def getLength(self, lane):
         if self.isIntersection(lane):
-            inroad = lane[:4]
-            outroad = lane[5:]
+            inroad, outroad = self.splitIntersection(lane)
             x1in,y1in,x2in,y2in = self.roads[inroad]
             x1out,y1out,x2out,y2out = self.roads[outroad]
             return getCircleLength(x1in,y1in,x2in,y2in,x1out,y1out,x2out,y2out)
         return getLineLength(*self.roads[lane])
            
-    def getLoc(self, lane, pos):
+    def getLoc(self, lane, pos, prevLane = None):
         if self.isIntersection(lane): # intersection
-            inroad = lane[:4]
-            outroad = lane[5:]
+            inroad, outroad = self.splitIntersection(lane)
             x1in,y1in,x2in,y2in = self.roads[inroad]
             x1out,y1out,x2out,y2out = self.roads[outroad]
             return getCircleLoc(x1in,y1in,x2in,y2in,x1out,y1out,x2out,y2out, pos)
         x1,y1,x2,y2 = self.roads[lane]
-        return getLineLoc(x1,y1,x2,y2, pos)
-        
-    def getPos(self, lane, x, y):
-        if self.isIntersection(lane): # intersection
-            inroad = lane[:4]
-            outroad = lane[5:]
+        loc = getLineLoc(x1,y1,x2,y2, pos)
+        if pos < 5. and not (prevLane is None):
+            prevLaneLength = self.getLength(prevLane)
+            inroad, outroad = self.splitIntersection(prevLane)
             x1in,y1in,x2in,y2in = self.roads[inroad]
-            x1out,y1out,x2out,y2out = self.roads[outroad]
-            return getCirclePos(x1in,y1in,x2in,y2in,x1out,y1out,x2out,y2out, x,y)
-        x1,y1,x2,y2 = self.roads[lane]
-        return getLinePos(x1,y1,x2,y2, x,y)
+            x,y,oldangle = getLineLoc(x1in, y1in, x2in, y2in, 0.)
+            angleChange = loc[2] - oldangle
+            if angleChange > np.pi:
+                angleChange = angleChange - np.pi*2
+            if angleChange < -np.pi:
+                angleChange = angleChange + np.pi*2
+            if np.abs(angleChange) > 0.1: # actually was an angle change
+                angle = oldangle + np.sign(angleChange)*\
+                        sumoAngle(pos + prevLaneLength, prevLaneLength + 5.)
+                return (loc[0],loc[1], angle)
+        return getLineLoc(x1,y1,x2,y2, pos)
     
     
 class Simulator():
@@ -152,6 +138,7 @@ class Simulator():
         self.lanes = {}
         self.pos = {}
         self.offset = {}
+        self.previousLanes = {}
         self.delay = delay
         self.gui = gui     
         self.inProjection = False
@@ -202,6 +189,7 @@ class Simulator():
         self.lanes[ID] = lane
         self.pos[ID] = pos
         self.offset[ID] = 0.
+        self.previousLanes[ID] = None
         
         if self.gui and not self.inProjection:
             self.world.AddCar(world.Car(ID, *self.RM.getLoc(lane, pos)))
@@ -211,6 +199,8 @@ class Simulator():
         if not pos is None:
             self.pos[ID] = pos
         if not offset is None:
+            self.offset[ID] = offset
+        else:
             self.offset[ID] = 0.
         self._guiMoveVehicle(ID)
             
@@ -226,6 +216,8 @@ class Simulator():
         # entering a new road
         else:
             self.pos[ID] = newpos - lanelength
+            self.previousLanes[ID] = currentLane
+            self.offset[ID] = 0.
             if self.RM.isIntersection(currentLane): # intersection to exit road
                 self.lanes[ID] = currentLane[5:]
 
@@ -241,7 +233,7 @@ class Simulator():
                     route = int(currentLane[0])
                     destinationRoute = roadOrder.loc[route, turn]
                     for inroad, outroad in self.RM.intersections:
-                        outroute,aa,bb = int(outroad[0])
+                        outroute = int(outroad[0])
                         if inroad == currentLane and outroute==destinationRoute:
                             self.lanes[ID] = self.RM.combineRoad(inroad, outroad)
                             laneFound = True
@@ -262,16 +254,20 @@ class Simulator():
                 else: # there is no road after this one
                     removed = True
                     
-        self._guiMoveVehicle(ID)
+        if not removed:
+            self._guiMoveVehicle(ID)
         return removed
             
     def getVehicleState(self, ID):
-        x,y,angle = self.RM.getLoc(self.lanes[ID],self.pos[ID]) 
-        return [self.lanes[ID], self.pos[ID], (x,y), angle]         
+        x,y,angle = self.RM.getLoc(self.lanes[ID],self.pos[ID], self.previousLanes[ID])
+        finalcoords = self._applyOffset(x,y,angle, self.offset[ID])
+        return [self.lanes[ID], self.pos[ID], finalcoords, angle]         
             
     def _guiMoveVehicle(self, ID):
         if self.gui and not self.inProjection:
-            x,y,angle = self.RM.getLoc(self.lanes[ID],self.pos[ID])
+            x,y,angle = self.RM.getLoc(self.lanes[ID],self.pos[ID],
+                                       self.previousLanes[ID])
+            x,y = self._applyOffset(x,y,angle, self.offset[ID])
             self.world.moveCar(ID, x, y, angle)
     
     def removeVehicle(self, ID):
@@ -282,11 +278,14 @@ class Simulator():
             self.world.removeCar(ID)
             
     def offsetVehicle(self, ID, offsetAmt):
-        self.offset[ID] = self.offset[ID] + offsetAmt            
+        self.offset[ID] = self.offset[ID] + offsetAmt      
+        
+    def _applyOffset(self, x,y,angle, offsetAmt): # orthogonal offset
+        return (x + np.sin(angle)*offsetAmt, y - np.cos(angle)*offsetAmt)
             
-    def updateGUI(self):
+    def updateGUI(self, allowPause=False):
         if self.gui:
-            self.world.Step()
+            self.world.Step(allowPause)
         time.sleep(self.delay)
         
     def end(self, waitOnEnd=False):
@@ -307,3 +306,43 @@ class Simulator():
         self.lanes = self.truestate[0]
         self.pos = self.truestate[1]
         self.inProjection = False
+        
+        
+'''
+Extra functions that may be needed someday   
+''' 
+def getLinePos(x1,y1,x2,y2,x,y):
+    length = getLineLength(x1,y1,x2,y2)
+    pos = (x-x1)/(x2-x1)*length
+    return pos
+    
+def getCirclePos(x1in, y1in, x2in, y2in, x1out, y1out, x2out, y2out, x, y):
+    x1 = x2in
+    y1 = y2in
+    x2 = x1out
+    y2 = y1out
+    theta = np.arctan2(y2in-y1in,x2in-x1in)
+    pi = np.pi
+    
+    r = (((y2-y1)**2.+(x2-x1)**2.) /2)**.5
+    bend = (y2-y1)*np.cos(theta) - (x2-x1)*np.sin(theta)
+    if bend > 0:
+        xr = x1 + r*np.cos(theta + pi/2)
+        yr = y1 + r*np.sin(theta + pi/2)
+        angle = np.arctan2(y-yr,x-xr) - theta + pi/2
+    else:
+        xr = x1 + r*np.cos(theta - pi/2)
+        yr = y1 + r*np.sin(theta - pi/2)
+        angle = np.arctan2(y-yr,x-xr) - theta - pi/2
+    return angle * r
+    
+    # roadmap method
+    def getPos(self, lane, x, y):
+        if self.isIntersection(lane): # intersection
+            inroad = lane[:4]
+            outroad = lane[5:]
+            x1in,y1in,x2in,y2in = self.roads[inroad]
+            x1out,y1out,x2out,y2out = self.roads[outroad]
+            return getCirclePos(x1in,y1in,x2in,y2in,x1out,y1out,x2out,y2out, x,y)
+        x1,y1,x2,y2 = self.roads[lane]
+        return getLinePos(x1,y1,x2,y2, x,y)

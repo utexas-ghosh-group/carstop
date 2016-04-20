@@ -30,9 +30,11 @@ class World(object):
         if wait:
             self._window.getMouse()
         
-    def Step(self):
+    def Step(self, allowPause = False):
         self._DrawCars()
         self._window.update()
+        if allowPause and not (self._window.checkMouse() is None):
+            self._window.getMouse()
         
     def End(self, wait=False):
         if wait:

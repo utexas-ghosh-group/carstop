@@ -1,5 +1,5 @@
 """
-4/5/16
+4/20/16
 """
 # -*- coding: utf-8 -*-
 import pandas as pd
@@ -18,10 +18,13 @@ sys.path.append(os.path.realpath('../../simulator'))
 from OwnSim import Simulator
 from OwnSim import RoadMap
 
-numiter = 1
-QTable = np.zeros((12096,18)) # run these two lines to initialize
+numiter = 100
+GUI = True
+SIMDELAY = 0.1
+trainingTable = False
+#QTable = np.zeros((12096,18)) # run these two lines to initialize
 #np.save('qtable.npy',QTable)      # a blank table and stats list
-#QTable = np.load('qtable.npy')
+QTable = np.load('qtable_4_20.npy')
 #Stats_train.to_csv('stats_training.csv')
 #Stats_train = pd.read_csv('stats_training.csv')
 #Stats_train=pd.DataFrame(np.zeros([1,5]),columns=['Collision','Reward','Time','WrongPath','Cars'])
@@ -365,9 +368,10 @@ while iteration <= numiter:
     WrongPath = 0
     ttime = 0
     maxTime = 100 # seconds
+    prevIndices = {}
        
     # start simulator
-    Sim = Simulator(roadMap, gui = True, delay = .2)    
+    Sim = Simulator(roadMap, gui = GUI, delay = SIMDELAY)    
 
     ## run simulation
     while ttime < maxTime and np.any(cars['status']<=0):
@@ -452,7 +456,7 @@ while iteration <= numiter:
             carID = changedCars[carNum]
             car = cars.iloc[carID]
             for altNum in range(carNum):
-                altID = activeCars[altNum]
+                altID = changedCars[altNum]
                 alt = cars.iloc[altID]
                 carObject = pd.Series([car['changex'],car['changey'],car['changeangle'],
                                        VEHsize[0],VEHsize[1]],
@@ -502,6 +506,7 @@ while iteration <= numiter:
          
         # update QTable
         Qstates = {}
+        prevprevIndices = prevIndices
         prevIndices = {}
         for carID in carsToUpdate:
             carUpdate = gatherStateInfo(cars, trajectories, carID)
@@ -532,24 +537,30 @@ while iteration <= numiter:
                 printString += str(realReward-differenceReward)
                 printString += " new value " + str(finalValue)
                 #print printString
-                QTable[prevIndices[carID]] = finalValue
-            #differenceReward = sum(reward(formatState(state, carID)) for
-            #                        state in Qstates.itervalues())
-            #if cars['indexS'][carID] >= 0:
-            #    QTable[cars['indexS'][carID], cars['indexA'][carID]] += (
-            #                realReward - differenceReward )
-            #cars['indexS'][carID] = QTableIndex.stateToNum(formatState(Qstates[carID]))
+                if trainingTable:
+                    QTable[prevIndices[carID]] = finalValue
+                    if prevprevIndices[carID][0] >= 0:
+                        QTable[prevprevIndices[carID]] =\
+                                    QTable[prevprevIndices[carID]]*.8 +\
+                                    (realReward-differenceReward)*.2
         for carID in carsToUpdate: # have to redo this to reset all state variables
             agents[carID].state_space(*formatState(Qstates[carID]))
+            # large debug message
+            fixedTurnDirection = formatState(Qstates[carID]).iloc[2]
+            if fixedTurnDirection == 0:
+                fixedTurnString = '2'
+            elif fixedTurnDirection == 1:
+                fixedTurnString = '0'
+            else:
+                fixedTurnString = '1'
             printString = "car "+str(carID)
             printString += " NTI "+str(formatState(Qstates[carID]).iloc[7])+\
-                            " turn "+str(formatState(Qstates[carID]).iloc[2])            
+                            " turn "+fixedTurnString            
             printString += " cross "+str(Qstates[carID]['Time to Crossing Car'])
             printString += " ahead "+str(Qstates[carID]['Time to Ahead Car'])
             printString += " TTNV "+str(formatState(Qstates[carID]).iloc[7])
             printString += " Speed "+str(formatState(Qstates[carID]).iloc[4])
-            
-            #printString += " behind "+str(Qstates[carID]['Time to Behind Car'])
+            printString += " behind "+str(Qstates[carID]['Time to Behind Car'])
             print printString
                        
         ## make actions
@@ -559,48 +570,54 @@ while iteration <= numiter:
             route,grade,ln = splitRoad(car['lane'])
             # get action from agent
             laneChange, speedChange, turn = agents[carID].Action_training(
-                                                    QTable)
+                                                    QTable, trainingTable)
+            turn = int(turn)
             suppressLaneChange = False
             suppressLaneChange = suppressLaneChange or (grade == 2 and
                                     car['lanepos'] <= 5.)
             suppressLaneChange = suppressLaneChange or (grade == 0 and 
                                     car['lanepos'] >= 89.)
             if suppressLaneChange:
-                laneChange = 0;
+                laneChange = 0
             printString = "car action "+str(carID)+": lane "+str(int(laneChange))
-            printString += " speed "+str(int(speedChange))+" turn "+str(int(turn))
+            printString += " speed "+str(int(speedChange))+" turn "+str(turn)
             #print printString
             #cars['indexA'][carID] = indexA
             
             offset = Sim.offset[str(carID)]
             maxChange = 1.
-            if laneChange>0 or cars.loc[carID,'lanechanged']>0:
-                cars.loc[carID,'lanechanged'] = 1
-                newlane = None
-                newoffset = None
-                if ln == 1: # left lane
-                    Sim.offsetVehicle(str(carID), maxChange)
-                    if offset + maxChange > 3.35/2.: # crossed to right lane
-                        crossed = 0
-                        newlane = makeRoad(route, grade, 0)
-                        newoffset = offset + maxChange - 3.35
-                        cars.loc[carID,'lanechanged'] = 0
-                else: # right lane
-                    Sim.offsetVehicle(str(carID),-maxChange)
-                    if offset - maxChange < -3.35/2.: # crossed to left lane
-                        newlane = makeRoad(route, grade, 1)
-                        newoffset = offset - maxChange + 3.35
-                        cars.loc[carID,'lanechanged'] = 0
-                if not newlane is None:
-                    Sim.moveVehicle(str(carID), newlane, car['lanepos'], offset=newoffset)
-                    cars.loc[carID,'lane'] = newlane
-                cars.loc[carID,'changex'] = car['x']
-                cars.loc[carID,'changey'] = car['y']
-                cars.loc[carID,'changeangle'] = car['angle']
-            else:
-                #cars.loc[carID,'lanechanged'] = 0
-                # head towards center of lane
-                Sim.offsetVehicle(str(carID), min(max(-offset, -maxChange),maxChange))
+#            if laneChange>0 or cars.loc[carID,'lanechanged']>0:
+#                cars.loc[carID,'lanechanged'] = 1
+#                newlane = None
+#                newoffset = None
+#                if ln == 1: # left lane
+#                    Sim.offsetVehicle(str(carID), maxChange)
+#                    if offset + maxChange > 3.35/2.: # crossed to right lane
+#                        crossed = 0
+#                        newlane = makeRoad(route, grade, 0)
+#                        newoffset = offset + maxChange - 3.35
+#                        cars.loc[carID,'lanechanged'] = 0
+#                else: # right lane
+#                    Sim.offsetVehicle(str(carID),-maxChange)
+#                    if offset - maxChange < -3.35/2.: # crossed on 1: lane 2 speed 0 turnto left lane
+#                        newlane = makeRoad(route, grade, 1)
+#                        newoffset = offset - maxChange + 3.35
+#                        cars.loc[carID,'lanechanged'] = 0
+#                if not newlane is None:
+#                    Sim.moveVehicle(str(carID), newlane, car['lanepos'], offset=newoffset)
+#                    cars.loc[carID,'lane'] = newlane
+#                cars.loc[carID,'changex'] = car['x']
+#                cars.loc[carID,'changey'] = car['y']
+#                cars.loc[carID,'changeangle'] = car['angle']
+#            else:
+#                #cars.loc[carID,'lanechanged'] = 0
+#                # head towards center of lane
+#                Sim.offsetVehicle(str(carID), min(max(-offset, -maxChange),maxChange))
+            if laneChange == 1 and ln == 1:
+                Sim.moveVehicle(str(carID), makeRoad(route, grade, 0))
+            elif laneChange == 0 and ln == 0:
+                Sim.moveVehicle(str(carID), makeRoad(route, grade, 1))
+                
                 
             speedChange = [0,-10.,10.][int(speedChange)]/MS2KPH            
             cars.loc[carID,'speed'] = min(max(car['speed']+speedChange, 0.),60./MS2KPH)
@@ -627,7 +644,8 @@ while iteration <= numiter:
 
 # save info afterwards
 iteration = iteration - 1
-#np.save('qtable_random2.npy',QTable)
+if trainingTable:
+    np.save('qtable.npy',QTable)
 Stats_train.loc['Collision'] = Stats_train.loc['Collision'] / Stats_train['Cars']
 Stats_train.loc['Reward'] = Stats_train.loc['Reward'] / Stats_train['Cars']
 Stats_train.loc['WrongPath'] = Stats_train.loc['WrongPath'] / Stats_train['Cars']
