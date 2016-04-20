@@ -21,10 +21,10 @@ from OwnSim import RoadMap
 numiter = 100
 GUI = True
 SIMDELAY = 0.1
-trainingTable = False
-#QTable = np.zeros((12096,18)) # run these two lines to initialize
+trainingTable = True
+QTable = np.zeros((12096,18)) # run these two lines to initialize
 #np.save('qtable.npy',QTable)      # a blank table and stats list
-QTable = np.load('qtable_4_20.npy')
+#QTable = np.load('qtable_4_20.npy')
 #Stats_train.to_csv('stats_training.csv')
 #Stats_train = pd.read_csv('stats_training.csv')
 #Stats_train=pd.DataFrame(np.zeros([1,5]),columns=['Collision','Reward','Time','WrongPath','Cars'])
@@ -438,10 +438,10 @@ while iteration <= numiter:
             for altNum in range(carNum):
                 altID = activeCars[altNum]
                 alt = cars.iloc[altID]
-                carObject = pd.Series([car['x'],car['y'],car['angle']+np.pi/2,
+                carObject = pd.Series([car['x'],car['y'],car['angle'],
                                        VEHsize[0],VEHsize[1]],
                                        index=collisionCheck.collisionVars)
-                altObject = pd.Series([alt['x'],alt['y'],alt['angle']+np.pi/2,
+                altObject = pd.Series([alt['x'],alt['y'],alt['angle'],
                                        VEHsize[0],VEHsize[1]],
                                        index=collisionCheck.collisionVars)
                 if collisionCheck.check(carObject, altObject):
