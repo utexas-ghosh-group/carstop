@@ -83,7 +83,7 @@ end
 % timesteps = (1:size(timeMatrix,2))/10;
 %  %
 % figure(1); clf;
-% i=10;
+% i=11;
 % plot(paths(i,:,1),paths(i,:,2),'r-.',...
 %      timeMatrix(i,:,1),timeMatrix(i,:,2),'g-.')
 %  %

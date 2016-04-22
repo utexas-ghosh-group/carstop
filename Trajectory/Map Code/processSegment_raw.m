@@ -3,7 +3,7 @@ clear;
 % gets direction labels
 % 4/13/16
 %%
-segmentString = 's3sb3';
+segmentString = 'rand1k';
 %%
 load(cat(2,'segment_',segmentString,'.mat'));
 

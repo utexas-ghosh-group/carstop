@@ -50,7 +50,7 @@ end
 
 %% save
 timeMatrix = transformed;
-save('segment_s2nb2_road.mat','timeMatrix','vehicleMatrix','roadMatrix');
+save('data_s2nb2_road.mat','timeMatrix','vehicleMatrix','roadMatrix');
 
 %% plot
 % load truth_s2nb_2_nomapFIX.mat;

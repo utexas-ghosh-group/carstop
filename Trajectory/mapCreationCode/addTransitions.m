@@ -1,4 +1,5 @@
 clear;
+importUsefulFunctions();
 load('roads_basic.mat'); % roads = struct with names field
 nroads = length(roads);
 RepoPath = pwd;

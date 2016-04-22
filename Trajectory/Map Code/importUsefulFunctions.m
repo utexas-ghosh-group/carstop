@@ -1,6 +1,6 @@
 function importUsefulFunctions()
 
-addpath('/home/motrom/Documents/carstop/Trajectory/Useful Functions');
+addpath('../Useful Functions');
     
 
 global roads;

@@ -1,10 +1,11 @@
-function maneuvers = predictManeuver_KF(~,timeMatrix,~)
+function maneuvers = predictManeuver_KF(~,timeMatrix,~,model)
 % uses KF to predict physical position, then very lazily computes maneuver
+% 4/21/16
 
 norm2d = @(x) (x(:,1).^2+x(:,2).^2).^.5;
 
 maneuvers = zeros(size(timeMatrix,1),1);
-futureTrajectories = predictKF2([], timeMatrix(:,:,1:2), [], 4 );
+futureTrajectories = predictKF([], timeMatrix(:,:,1:2), [], 4, model );
 
 futureLoc = squeeze(futureTrajectories(:,1,:));
 currentTime = size(timeMatrix,2);

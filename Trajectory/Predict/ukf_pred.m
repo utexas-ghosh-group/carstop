@@ -25,7 +25,7 @@ function [x1,X1,P1,X2]=ukf_pred(fstate,x,P,Q,u,dt)
 % Modified my Taewan Kim
 %
 L=numel(x);                                 %numer of states
-alpha=1e-3;                                 %default, tunable
+alpha=1e-2;                                 %default, tunable
 ki=0;                                       %default, tunable
 beta=2;                                     %default, tunable
 

@@ -1,5 +1,5 @@
 load('roads_all.mat');
-load('segment_s2nb_2.mat');
+load('data_rand1k_raw.mat');
 figure(1); clf; hold on;
 % plot roads
 for i = 1:6%length(roads)
@@ -8,9 +8,12 @@ for i = 1:6%length(roads)
     plot(points(:,1),points(:,2));
 end
 % plot vehicles
-for i = find(aa>15)%1:%size(timeMatrix,1)
-    plot(timeMatrix(i,:,1),timeMatrix(i,:,2),'k.');
-    firstpoint = find((timeMatrix(i,:,3)==4)+(timeMatrix(i,:,3)==5)>0, 1);
-    plot(timeMatrix(i,firstpoint,1),timeMatrix(i,firstpoint,2),'ko');
+for i = 1:size(timeMatrix,1)
+    partsToPlot = (timeMatrix(i,:,3) >= 1).*(timeMatrix(i,:,3) <= 6) > 0;
+    if any(partsToPlot)
+        plot(timeMatrix(i,partsToPlot,1),timeMatrix(i,partsToPlot,2),'k.');
+    end
+    %firstpoint = find((timeMatrix(i,:,3)==4)+(timeMatrix(i,:,3)==5)>0, 1);
+    %plot(timeMatrix(i,firstpoint,1),timeMatrix(i,firstpoint,2),'ko');
 %     plot(guess(i,:,1), guess(i,:,2),'r.');
 end

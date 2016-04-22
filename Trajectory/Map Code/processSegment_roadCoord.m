@@ -1,9 +1,9 @@
 clear;
 % Takes segment_XXX.mat files and transforms them into road coordinates
 % uses labeled roads
-% 4/15/16
+% 4/18/16
 %%
-segmentString = 's3sb3';
+segmentString = 'rand1k';
 %%
 load(cat(2,'segment_',segmentString,'.mat'));
 
@@ -25,23 +25,16 @@ directionLabels = zeros(length(todo),1);
 for obsidx = 1:length(todo)
     obs = todo(obsidx);
     
-    %before
-    path = squeeze(timeMatrix(obs, beforeRange, 1:2));
-    roadsBefore = squeeze(timeMatrix(obs,beforeRange,5));
-    [longlatBefore, successBefore] = findRoadCoords(roadsBefore, path);
-    dataTimeMatrix(obsidx,:,:) = longlatBefore;
+    path = squeeze(timeMatrix(obs,:,1:2));
+    roadsHere = squeeze(timeMatrix(obs,:,5));
+    [longlat, success] = findRoadCoords(roadsHere, path);
+    dataTimeMatrix(obsidx,:,:) = longlat(beforeRange,:);
+    truthTimeMatrix(obsidx,:,:) = longlat(afterRange,:);
     
-    %after
-    path = squeeze(timeMatrix(obs, afterRange, 1:2));
-    roadsAfter = squeeze(timeMatrix(obs, afterRange, 5));
-    [longlatAfter, successAfter] = findRoadCoords(roadsAfter, path);
-    longlatAfter(:,1) = longlatAfter(:,1) + longlatBefore(end,1);
-    truthTimeMatrix(obsidx,:,:) = longlatAfter;
-    
-    % maneuver labelling
-    if successBefore && successAfter
+    if success
         includedFromSegment(obsidx) = 1;
-        directionLabels(obsidx) = labelDirection(roadsBefore, roadsAfter);
+        directionLabels(obsidx) = labelDirection(roadsHere(beforeRange),...
+                                                 roadsHere(afterRange));
     end
 end
 
@@ -76,3 +69,12 @@ save(cat(2,'truth_',segmentString,'_roadCoord.mat'), 'timeMatrix',...
 % title('difference in road matching errors in seg s3sb2');
 % legend('findRoad','NGSIM labels');
 % ylabel('m'); xlabel('s');
+
+% plug into roadCoords2rawCoords plots
+% load('data_rand1k_roadCoord.mat','timeMatrix');
+% dataMatrix = timeMatrix;
+% load('truth_rand1k_roadCoord.mat');
+% timeMatrix = cat(2, dataMatrix, timeMatrix);
+% paths = roadCoords2rawCoords(timeMatrix);
+% load('segment_rand1k.mat','timeMatrix');
+% timeMatrix = timeMatrix(includedFromSegment>0, :, [1,2,5]);

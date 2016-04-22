@@ -15,4 +15,8 @@ for i = 1:length(roads_to_mod)
     roads(roads_to_mod(i)).segments = ss;
 end
 
+for i = 1:length(roads)
+    roads(i).segments(:,1) = roads(i).segments(:,1) - .5;
+end
+
 save('roads_all.mat','roads','adjacencies','transitions');

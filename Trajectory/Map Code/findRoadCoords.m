@@ -1,12 +1,12 @@
 function [path,success] = findRoadCoords(vroads, path)
 % given a path and road labels, find closest coordinates on road
 % transform into longitudinal/lateral framework
-% 4/15/16
+% 4/18/16
 global roads;
 success = 0;
 closestTraj = path;
 closestGradient = path;
-longitudinalB = zeros(length(path),1);
+longitudinal = zeros(length(path),1);
 
 if any(vroads == 0)
     return
@@ -43,16 +43,19 @@ for j = 1:length(path)
         end
         prevSegment = thisRoad;
     end
-    longitudinalB(j) = distance + completedRoad;
+    longitudinal(j) = distance + completedRoad;
     prevTraj = currentTraj;
     prevDist = distance;
     closestTraj(j,:) = currentTraj;
     closestGradient(j,:) = currentGrad;
 end
+if longitudinal(length(path))-longitudinal(1) <= 0
+    return
+end
 
 deviance = path - closestTraj;
-lateralB = deviance(:,1) .* closestGradient(:,2) -...
+lateral = deviance(:,1) .* closestGradient(:,2) -...
     deviance(:,2) .* closestGradient(:,1);
-path = [longitudinalB, lateralB];
+path = [longitudinal, lateral];
 
 success = 1;

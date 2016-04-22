@@ -6,7 +6,7 @@ function direction = labelDirection(roadNumsBefore, roadNumsAfter)
 % 4 = right lane change
 % 5 = right
 % <0 = error
-% 4/15/16
+% 4/21/16
 
     global roads; global transitions; global adjacencies;
     nroads = length(roads);
@@ -27,12 +27,46 @@ function direction = labelDirection(roadNumsBefore, roadNumsAfter)
     nameBefore = roads(numBefore).name;
 
     leftRoadNames = cell(0,1);
-    %straightRoadNames = cell(0,1);
     rightRoadNames = cell(0,1);
     if strncmp(nameBefore, 's3sb', 4)
-        leftRoadNames = cat(1, leftRoadNames, '211', 's3sb_X_211');
-        %straightRoadNames = cat(1, straightRoadNames, 's2sb', 's3sb_X_s2sb');
-        rightRoadNames = cat(1, rightRoadNames, '203', 's3sb_X_203');
+        leftRoadNames = cat(1, leftRoadNames, '203', 's3sb_X_203');
+        rightRoadNames = cat(1, rightRoadNames, '211', 's3sb_X_211');
+    elseif strncmp(nameBefore, 's2nb', 4)
+        leftRoadNames = cat(1, leftRoadNames, '211', 's2nb_X_211');
+        rightRoadNames = cat(1, rightRoadNames, '203', 's2nb_X_203');
+    elseif strncmp(nameBefore, 's3nb', 4)
+        leftRoadNames = cat(1, leftRoadNames, '210', 's3nb_X_210');
+        rightRoadNames = cat(1, rightRoadNames, '205', 's3nb_X_205');
+    elseif strncmp(nameBefore, 's4sb', 4)
+        leftRoadNames = cat(1, leftRoadNames, '205', 's4sb_X_205');
+        rightRoadNames = cat(1, rightRoadNames, '210', 's4sb_X_210');
+    elseif strncmp(nameBefore, 's4nb', 4)
+        leftRoadNames = cat(1, leftRoadNames, '209', 's4nb_X_209');
+        rightRoadNames = cat(1, rightRoadNames, '207', 's4nb_X_207');
+    elseif strncmp(nameBefore, '108', 4)
+        leftRoadNames = cat(1, leftRoadNames, '207', '108_X_207');
+        rightRoadNames = cat(1, rightRoadNames, '209', '108_X_209');
+    elseif strncmp(nameBefore, '109', 4)
+        leftRoadNames = cat(1, leftRoadNames, '208', '109_X_208');
+        rightRoadNames = cat(1, rightRoadNames, 's4sb', '109_X_s4sb');
+    elseif strncmp(nameBefore, '107', 4)
+        leftRoadNames = cat(1, leftRoadNames, 's4sb', '107_X_s4sb');
+        rightRoadNames = cat(1, rightRoadNames, '208', '107_X_208');
+    elseif strncmp(nameBefore, '110', 4)
+        leftRoadNames = cat(1, leftRoadNames, 's4nb', '110_X_s4nb');
+        rightRoadNames = cat(1, rightRoadNames, 's3sb', '110_X_s3sb');
+    elseif strncmp(nameBefore, '105', 4)
+        leftRoadNames = cat(1, leftRoadNames, 's3sb', '105_X_s3sb');
+        rightRoadNames = cat(1, rightRoadNames, 's4nb', '105_X_s4nb');
+    elseif strncmp(nameBefore, '111', 4)
+        leftRoadNames = cat(1, leftRoadNames, 's3nb', '111_X_s3nb');
+        rightRoadNames = cat(1, rightRoadNames, 's2sb', '111_X_s2sb');
+    elseif strncmp(nameBefore, '103', 4)
+        leftRoadNames = cat(1, leftRoadNames, 's2sb', '103_X_s2sb');
+        rightRoadNames = cat(1, rightRoadNames, 's3nb', '103_X_s3nb');
+    elseif strncmp(nameBefore, '102', 4)
+        leftRoadNames = cat(1, leftRoadNames, '201', '102_X_201');
+        rightRoadNames = cat(1, rightRoadNames, 's2nb', '102_X_s2nb');
     end
     
     % add adjacents

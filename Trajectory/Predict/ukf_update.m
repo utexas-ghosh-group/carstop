@@ -30,7 +30,7 @@ function [x,P,r,Wk]=ukf_update(x1,X1,P1,X2,hmeas,z,R,u,dt)
 %
 L=numel(x1);                                %numer of states
 m=numel(z);                                 %numer of measurements
-alpha=1e-3;                                 %default, tunable
+alpha=1e-2;                                 %default, tunable
 ki=0;                                       %default, tunable
 beta=2;                                     %default, tunable
 lambda=alpha^2*(L+ki)-L;                    %scaling factor

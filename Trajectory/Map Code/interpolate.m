@@ -7,6 +7,7 @@ function [points,gradients,spaces] = interpolate(road, spaces)
     % output 3: leftover spaces, if any (will return [] if all are used)
     %           Ex: if spaces = [1, 2, 5, 7] and the road is 4 meters
     %           long, the leftover will be [1, 3].
+% 4/21/16 made it work for nonincreasing spaces... I think
 
     if nargin == 1
         spaces = 1;
@@ -28,15 +29,26 @@ function [points,gradients,spaces] = interpolate(road, spaces)
         spaces = spaces';
     end
     
-   points = zeros(0,2);
-   gradients = zeros(0,2);
+%    points = zeros(0,2);
+%    gradients = zeros(0,2);
+%    for i = 1:size(road,1)
+%        spacesubset = spaces(spaces <= segmentLengths(i));
+%        spaces = spaces(spaces>segmentLengths(i)) - segmentLengths(i);
+%        
+%        points = cat(1, points, interpSeg(road(i,:), spacesubset));
+%        gradients = cat(1, gradients, ...
+%            ang2vec(tangentSeg(road(i,:), spacesubset)));
+%    end
+   points = zeros(length(spaces),2);
+   gradients = zeros(length(spaces),2);
+   roadLengthSoFar = cumsum([0; segmentLengths]);
    for i = 1:size(road,1)
-       spacesubset = spaces(spaces <= segmentLengths(i));
-       spaces = spaces(spaces>segmentLengths(i)) - segmentLengths(i);
-       
-       points = cat(1, points, interpSeg(road(i,:), spacesubset));
-       gradients = cat(1, gradients, ...
-           ang2vec(tangentSeg(road(i,:), spacesubset)));
+       spacesubset = (spaces >= roadLengthSoFar(i)-.1).*...
+                     (spaces <= roadLengthSoFar(i+1)+.1) > 0;
+       pointssubset = spaces(spacesubset)-roadLengthSoFar(i);
+       points(spacesubset,:) = interpSeg(road(i,:), pointssubset);
+       gradients(spacesubset, :) = ang2vec(tangentSeg(road(i,:), ...
+                                                    pointssubset));
    end
 end
 
