@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-replacing SUMO
-3/31/16
+last mod 10/7/16, got rid of special turns for Qsim and added exit keystroke
 """
 import numpy as np
 import pandas as pd
@@ -82,6 +81,7 @@ class RoadMap():
         # intersections format: list of [road1, road2]
         self.roads = roads
         self.intersections = intersections
+        self.roadNameLen = len(next(roads.iterkeys()))
         
     # for two road names, find the name of the intersection road between them
     def combineRoad(self, inroad, outroad):
@@ -91,13 +91,13 @@ class RoadMap():
         
     # determine whether a road name belongs to an original road or an intersection
     def isIntersection(self, lane):
-        return len(lane) == 9
+        return len(lane) == self.roadNameLen*2+1
         
     # given an intersection road name, return the two original road names
     def splitIntersection(self, intersectionRoad):
         middleInd = int(len(intersectionRoad)/2)
-        if intersectionRoad[middleInd] == '_':
-            return [intersectionRoad[:middleInd], intersectionRoad[middleInd+1:]]
+        assert(intersectionRoad[middleInd] == '_')
+        return [intersectionRoad[:middleInd], intersectionRoad[middleInd+1:]]
            
     def getLength(self, lane):
         if self.isIntersection(lane):
@@ -129,7 +129,7 @@ class RoadMap():
                 angle = oldangle + np.sign(angleChange)*\
                         sumoAngle(pos + prevLaneLength, prevLaneLength + 5.)
                 return (loc[0],loc[1], angle)
-        return getLineLoc(x1,y1,x2,y2, pos)
+        return loc
     
     
 class Simulator():
@@ -219,29 +219,14 @@ class Simulator():
             self.previousLanes[ID] = currentLane
             self.offset[ID] = 0.
             if self.RM.isIntersection(currentLane): # intersection to exit road
-                self.lanes[ID] = currentLane[5:]
+                self.lanes[ID] = self.RM.splitIntersection(currentLane)[1]
 
             else: # entering intersection
                 laneFound = False
-                if type(turn) is int:
-                    # turn direction given as a number
-                    # currently this only works for the Qlearning intersection
-                    turnStrings = ['straight','right','left']
-                    roadOrder = pd.DataFrame({'left':[4,3,1,2],'right':[3,4,2,1],
-                          'straight':[2,1,4,3]},index=[1,2,3,4])
-                    turn = turnStrings[turn]
-                    route = int(currentLane[0])
-                    destinationRoute = roadOrder.loc[route, turn]
-                    for inroad, outroad in self.RM.intersections:
-                        outroute = int(outroad[0])
-                        if inroad == currentLane and outroute==destinationRoute:
-                            self.lanes[ID] = self.RM.combineRoad(inroad, outroad)
-                            laneFound = True
-                else:
-                    # next lane is given as a string
-                    if turn in self.RM.roads.iterkeys():                    
-                        self.lanes[ID] = turn
-                        laneFound = True
+                # next lane is given as a string
+                if [currentLane, turn] in self.RM.intersections:
+                    self.lanes[ID] = self.RM.combineRoad(currentLane, turn)
+                    laneFound = True
                 # couldn't find road with correct turn, use wrong one
                 if not laneFound:
                     for inroad, outroad in self.RM.intersections:
@@ -283,10 +268,11 @@ class Simulator():
     def _applyOffset(self, x,y,angle, offsetAmt): # orthogonal offset
         return (x + np.sin(angle)*offsetAmt, y - np.cos(angle)*offsetAmt)
             
-    def updateGUI(self, allowPause=False):
-        if self.gui:
-            self.world.Step(allowPause)
+    def updateGUI(self, allowPause=False, allowExit=False):
         time.sleep(self.delay)
+        if self.gui:
+            return self.world.Step(allowPause,allowExit)
+        return False
         
     def end(self, waitOnEnd=False):
         if self.gui:

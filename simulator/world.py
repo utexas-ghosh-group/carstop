@@ -1,6 +1,7 @@
 '''
 This utilizes the tkinter package and the graphics.py code that Sean found
 3/22/16
+last mod 10/7/16 adding exit keystroke ('q') and placing pause before update
 '''
 
 from graphics import *
@@ -30,11 +31,13 @@ class World(object):
         if wait:
             self._window.getMouse()
         
-    def Step(self, allowPause = False):
-        self._DrawCars()
-        self._window.update()
+    def Step(self, allowPause = False, allowExit = False):
+        if allowExit and self._window.checkKey() == 'q':
+            return True
         if allowPause and not (self._window.checkMouse() is None):
             self._window.getMouse()
+        self._DrawCars()
+        self._window.update()
         
     def End(self, wait=False):
         if wait:
