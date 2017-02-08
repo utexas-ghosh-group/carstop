@@ -1,6 +1,6 @@
 clear;
 %% 4/14/16
-dataName = 's3sb3_raw';
+dataName = 's2nb2_raw';
 methodName = 'CV';
 overallTitle = 'test plot';
 plotType = 'trajectory';
@@ -9,12 +9,12 @@ plotType = 'trajectory';
 
 % inputs: truth (3d matrix, traj X time X [x,y])
 %         prediction (same format)
-truth = load(cat(2,'truth_',dataName,'.mat'),'timeMatrix');
-truth = truth.timeMatrix;
+%truth = load(cat(2,'truth_',dataName,'.mat'),'timeMatrix');
+%truth = truth.timeMatrix;
 maneuvers = load(cat(2,'truth_',dataName,'.mat'),'contextMatrix');
 maneuvers = maneuvers.contextMatrix;
-prediction = load(cat(2,'trajectory_',dataName,'_',methodName,'.mat'),...
-                    'predictedTrajectory');
+prediction = load(cat(2,'trajectory_',dataName,'_',methodName,'.mat'));
+truth = prediction.truth;
 prediction = prediction.predictedTrajectory;
                 
 ntrajects = size(truth,1);

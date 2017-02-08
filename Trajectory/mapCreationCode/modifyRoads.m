@@ -2,11 +2,11 @@
 % on split-off lanes if they are made too short
 % This file enlarges these lanes to avoid the problem, which might cause
 % problems in other areas... but hopefully not
-% 4/15/16
+% 4/23/16
 %%
 load('roads_all.mat');
-roads_to_mod = [4,5,6];
-distances_to_add = [20,20,10];
+roads_to_mod = [4,5,6,75,76,77,78];
+distances_to_add = [20,20,10,5,5,5,5];
 
 for i = 1:length(roads_to_mod)
     ss = roads(roads_to_mod(i)).segments;

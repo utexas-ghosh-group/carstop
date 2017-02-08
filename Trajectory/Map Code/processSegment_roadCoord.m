@@ -3,7 +3,7 @@ clear;
 % uses labeled roads
 % 4/18/16
 %%
-segmentString = 'rand1k';
+segmentString = 'rand2k';
 %%
 load(cat(2,'segment_',segmentString,'.mat'));
 
@@ -12,8 +12,8 @@ importUsefulFunctions();
 nobs = size(timeMatrix,1);
 
 todo = 1:nobs;
-currentPoint = 101;
-nBefore = 100;
+currentPoint = 71;
+nBefore = 70;
 nAfter = 50;
 beforeRange = currentPoint-nBefore:currentPoint;
 afterRange = currentPoint+1 : currentPoint+nAfter;

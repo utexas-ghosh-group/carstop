@@ -1,5 +1,5 @@
 function trajectories = predictKF(~, timeMatrix, ~ , timesToPredict, model)
-% 4/21/16
+% 4/23/16
 
 dt = 0.1; % time step
 
@@ -61,7 +61,7 @@ case 'CV' % CV 2D + heading
     xInitial = [500 500 0 0]';
     PInitial = diag([500 500 30 2.].^2);
     filter = 'UKF';
-case 'CA' % CA 2D, heading and ang-vel.
+case 'NCT' % CA 2D, heading and ang-vel.
     % these are the integrals of (v+at)*cos(theta+wt),(v+at)*sin(theta+wt)
     Fx = @(v,a,th,w,dt) (a*dt+v)/w.*sin(th+w*dt)+a/w^2*cos(th+w*dt)-...
                             v/w*sin(th)-a/w^2*cos(th);
@@ -76,12 +76,25 @@ case 'CA' % CA 2D, heading and ang-vel.
                           Fyconst(x(3),x(5),x(4),dt), x(6));
     F = @(x,u,dt) x + [Fxfull(x,dt); Fyfull(x,dt); x(5)*dt; x(6)*dt; 0; 0];
     H = @(x,u,dt) x(1:2);
-    Q = diag([.1, .1, .05, .1, .1, .05]);
+    Q = diag([.1, .1, .1, .05, .05, .03]);
     R = .5*eye(2);
     predictFun = @(x, times) [x(1)+Fxfull(x,times),...
                               x(2)+Fyfull(x,times)]; % damping is too hard
     xInitial = [0 0 0 0 0 0]';
     PInitial = diag([500, 500, 30, 3.2, 1, .5].^2);
+    filter = 'UKF';
+case 'CA' % velocity, heading, and accel
+    dist = @(v,a,dt) v*dt + a/2*dt*dt;
+    F = @(x,u,dt) x + [dist(x(3),x(5),dt)*cos(x(4)); ...
+                       dist(x(3),x(5),dt)*sin(x(4)); x(5)*dt; 0; 0];
+    H = @(x,u,dt) x(1:2);
+    Q = diag([.1, .1, .1, .05, .05]);
+    R = .5*eye(2);
+    dampdist =  @(v,a,t) a/2*t.^2 - a*exp(-5)*(t + 1 + exp(t))+v;
+    predictFun = @(x, times) [x(1)+dampdist(x(3),x(5),times)*cos(x(4)), ...
+                              x(2)+dampdist(x(3),x(5),times)*sin(x(4))];
+    xInitial = [0 0 0 0 0]';
+    PInitial = diag([500, 500, 30, 3.2, 1].^2);
     filter = 'UKF';
 end
 

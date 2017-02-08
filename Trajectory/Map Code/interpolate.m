@@ -7,7 +7,7 @@ function [points,gradients,spaces] = interpolate(road, spaces)
     % output 3: leftover spaces, if any (will return [] if all are used)
     %           Ex: if spaces = [1, 2, 5, 7] and the road is 4 meters
     %           long, the leftover will be [1, 3].
-% 4/21/16 made it work for nonincreasing spaces... I think
+% 4/23/16 added bit for going past the road
 
     if nargin == 1
         spaces = 1;
@@ -49,6 +49,12 @@ function [points,gradients,spaces] = interpolate(road, spaces)
        points(spacesubset,:) = interpSeg(road(i,:), pointssubset);
        gradients(spacesubset, :) = ang2vec(tangentSeg(road(i,:), ...
                                                     pointssubset));
+   end
+   pastsubset = spaces >= roadLengthSoFar(end);
+   if any(pastsubset)
+    pointssubset = spaces(pastsubset)-roadLengthSoFar(length(roadLengthSoFar)-1);
+    points(pastsubset,:) = interpSeg(road(end,:), pointssubset);
+    gradients(pastsubset, :) = ang2vec(tangentSeg(road(i,:),pointssubset));
    end
 end
 

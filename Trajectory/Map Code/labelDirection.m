@@ -91,6 +91,8 @@ function direction = labelDirection(roadNumsBefore, roadNumsAfter)
     allAdjacents = (leftLCnums + rightLCnums) > 0;
     allAdjacents(numBefore) = 1;
     allTransitions = index(any(transitions(allAdjacents,:),1));
+    allTransitions = cat(2, allTransitions, ...
+                        index(any(transitions(allTransitions,:),1)));
     leftTnums = [];
     rightTnums = [];
     straightnums = [];

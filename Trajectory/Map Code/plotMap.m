@@ -1,15 +1,20 @@
 load('roads_all.mat');
-load('data_rand1k_raw.mat');
 figure(1); clf; hold on;
 % plot roads
-for i = 1:6%length(roads)
-    xx = roads(i).segments;
+for i = 7:11%length(roads)
+    %xx = roads(i).segments;
     points = interpolate(roads(i).segments , 1);
     plot(points(:,1),points(:,2));
 end
+
 % plot vehicles
+%load('data_rand1k_raw.mat');
 for i = 1:size(timeMatrix,1)
-    partsToPlot = (timeMatrix(i,:,3) >= 1).*(timeMatrix(i,:,3) <= 6) > 0;
+    %partsToPlot = (timeMatrix(i,:,3) >= 1).*(timeMatrix(i,:,3) <= 6) > 0;
+    partsToPlot = [];
+    if contextMatrix(i) == 1
+        partsToPlot = 1:50;
+    end
     if any(partsToPlot)
         plot(timeMatrix(i,partsToPlot,1),timeMatrix(i,partsToPlot,2),'k.');
     end

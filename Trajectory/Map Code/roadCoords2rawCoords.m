@@ -73,9 +73,9 @@ for i = 1:size(timeMatrix,1)
 end
 
 %% testing, keep commented otherwise
-% load('data_s3sb3_raw.mat')
+% load('data_rand1k_raw.mat')
 % oldIncluded = includedFromSegment;
-% load('data_s3sb3_roadCoord.mat','includedFromSegment');
+% load('data_rand1k_roadCoord.mat','includedFromSegment');
 % newIncluded = includedFromSegment(oldIncluded > 0);
 % timeMatrix = timeMatrix(newIncluded>0,:,:);
 % errors = ((paths(:,:,1)-timeMatrix(:,:,1)).^2 +...

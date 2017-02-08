@@ -1,7 +1,7 @@
 clear;
 % Takes segment_XXX.mat files and removes all but position coordinates
 % gets direction labels
-% 4/13/16
+% 4/26/16 not done yet
 %%
 segmentString = 'rand2k';
 %%
