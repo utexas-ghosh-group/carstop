@@ -58,7 +58,7 @@ def plotROC(truth, results, savename=None):
     plt.figure(figsize=(9.,8.))
     colors = [cmx.viridis(x) for x in np.linspace(0.,1., len(results))]
     counter = 0
-    for label, result in results.iteritems():
+    for label, result in results.items():
         preds = np.array([pred for pred, runtime in result])
         FP,FN = ROC(truth, preds)
         plt.plot(FP, 1-FN, color=colors[counter], label=label)
@@ -87,7 +87,7 @@ def bigTable(truth, results, savename=None, fp_fn_vals=[], worst_vals=[],
                      'avg cost @ z='+str(z_cost_val)]
     
     results2 = {}
-    for label, result in results.iteritems():
+    for label, result in results.items():
         preds = np.array([pred for pred, runtime in result])
         runtimes = [runtime for pred, runtime in result]
         FP,FN = ROC(truth, preds)

@@ -28,6 +28,10 @@ import UnscentedTransform as UT
 class MM_LineCV():
     """ Vehicle follows a predetermined road. The roads are based on an
         intersection in SUMO, as explained in the roadLoc module.
+        X_{t+del_t} = F_{del_t} X_t + N * del_t
+        F_{del_t} = [1, del_t; 0, 1]
+        X_t = state at time t
+        N = noiseMatrix
         
         state = [displacement, velocity]
         noiseMatrix = per-second variance in motion equation """
@@ -71,6 +75,10 @@ class MM_Bicycle():
     """
     The bicycle model has been used a lot for car motion, a few papers defining
     it were cited in the paper.
+    X_{t+del_t} = B(X_t , del_t) + N * del_t
+    B = bicycle model
+    X_t = state at time t
+    N = noiseMatrix
     
     state = [x, y, angle, velocity, acceleration, angular velocity]
     noiseMatrix = covariance matrix of motion noise (for roughly 1 second)
@@ -118,19 +126,13 @@ class MM_Bicycle():
         mean[:,2] = np.arctan2(sinmean, cosmean)
         #
         points = points - mean
-        # reformat angles to be in +-pi
-        angles = points[:,2]
-        angles[angles > np.pi] = angles[angles > np.pi] - np.pi*2
-        angles[angles < -np.pi] = angles[angles < -np.pi] + np.pi*2
-        points[:,2] = angles
+        # reformat angle residuals to be in +-pi
+        rectify(points[:,2])
         #
         cov = points.T.dot(np.diag(self.weights)).dot(points) + self.cov*time
         outpoints = mean + self.points.dot(np.linalg.cholesky(cov).T)
         # reformat angles to be in +-pi
-        angles = outpoints[:,2]
-        angles[angles > np.pi] = angles[angles > np.pi] - np.pi*2
-        angles[angles < -np.pi] = angles[angles < -np.pi] + np.pi*2
-        outpoints[:,2] = angles
+        rectify(outpoints[:,2])
         return outpoints
         
             
@@ -146,3 +148,9 @@ class initialState_normal():
         self.utpoints = np.tile(mean,(utpoints.shape[0],1)) + utpoints.dot(chol)
     def sample(self, nsamples):
         return rmvnorm.rvs(self.mean, self.cov, size=nsamples)
+    
+    
+def rectify(theta):
+    theta[theta >  np.pi] -= 2*np.pi
+    theta[theta < -np.pi] += 2*np.pi
+    return theta

@@ -6,13 +6,17 @@ one second of prediction, and simulates data with which to train this regressor.
 The random scenario generation from the simulations could be used to train
 regression models. However, models that are trained on these admittedly
 specific examples might perform well on these examples but not other scenarios,
-resulting in a somewhat dishonest evaluation.
+resulting in a somewhat dishonest evaluation. To avoid this, the vehicles'
+initial positions are generated from a uniform distribution in this code, rather
+than the moving-backwards generation of the simulate_1 code. Additionally, the
+variance in the initial position (stored here as 'noise') is not the same as in
+the simulate_1 code.
 
 For this model, input features to the regressor are each vehicle's position and
 velocity, totalling four features.
 
-For the first two simulations, the randomness in the vehicles' initial
-positions was actually not included in the model. This lowers the dimensionality
+For the first two experiments, uncertainty in the vehicles' initial
+positions is actually not included in the model. This lowers the dimensionality
 and makes training much more feasible, but will cause the alarm to be highly
 inaccurate if the vehicle's starting positions are poorly known (then again, in
 this case the alarm will probably suck anyway).
@@ -34,7 +38,7 @@ model_name = 'sim_1'
 
 mean_means = np.array((-5, 10))
 mean_bounds = np.array((25, 20))
-noise = np.diag([1e-5, 1e-5])
+noise = np.diag([1e-6, 1e-6]) # essentially zero noise
 truthMM1 = motionModels.MM_LineCV('left-right', noise)
 truthMM2 = motionModels.MM_LineCV('right-down', noise)
 timeres = .1
@@ -80,9 +84,9 @@ def scoreModel(truth, pred, logit):
         pred = 1./(1+np.exp(-pred))
     else:
         pred = np.minimum(np.maximum(pred,0.),1.)
-    print "test R^2 {:.3f}".format(
-        1-np.sum((pred - truth)**2.)/np.sum((np.mean(truth)-truth)**2.) )
-    print "AUC {:.3f}".format( AUC(*ROC(truth, pred)) )
+    print( "test R^2 {:.3f}".format(
+        1-np.sum((pred - truth)**2.)/np.sum((np.mean(truth)-truth)**2.) ))
+    print( "AUC {:.3f}".format( AUC(*ROC(truth, pred)) ))
      
     
 def trainModels():
@@ -95,8 +99,7 @@ def trainModels():
     ## often used in classification models. Did not have a major effect.
     logit = False
     
-    print "mean y = "+str(np.mean(y_0))
-    print "RMSR y = "+str(np.std(y_0))
+    print( "y mean = {:f} , RMSR = {:f}".format(np.mean(y_0), np.std(y_0) ))
     
     X_train, X_test, y_train, y_test = train_test_split(X_0,y_0,test_size=.01)
     if logit:
@@ -105,34 +108,34 @@ def trainModels():
         y_train = np.log(y_train / (1 - y_train))
     
     ## multi-layer perceptron
-    print "MLP"
+    print("MLP")
     mlp = MLPRegressor(hidden_layer_sizes=(150,), tol=1e-10, max_iter=500)
     mlp.fit(X_train, y_train)
-    print "train R^2 "+str( mlp.score(X_train, y_train) )
+    print( "train R^2 {:f}".format( mlp.score(X_train, y_train) ))
     scoreModel(y_test, mlp.predict(X_test), logit)
     ff = time.time()
     mlp.predict(X_0[:100])
-    print "runtime for 100 samples "+str( time.time()-ff )
+    print( "runtime for 100 samples: {:.1e}".format( time.time()-ff ))
 
     ## gradient boosting, a slow but highly regarded ensemble regressor
-    print "GBR"
+    print("GBR")
     gbr = GradientBoostingRegressor(max_depth=4)# default 3
     gbr.fit(X_train,y_train)
-    print "train R^2 "+str( gbr.score(X_train, y_train) )
+    print( "train R^2 {:f}".format( gbr.score(X_train, y_train) ))
     scoreModel(y_test, gbr.predict(X_test), logit)
     ff = time.time()
     gbr.predict(X_0[:100])
-    print "runtime for 100 samples "+str( time.time()-ff )
+    print( "runtime for 100 samples: {:.1e}".format( time.time()-ff ))
 
     ## regression trees, very fast in training and use, but easily overfit data
-    print "DT"
+    print("DT")
     dt = DecisionTreeRegressor(max_depth=14)
     dt.fit(X_train,y_train)
-    print "train R^2 "+str( dt.score(X_train, y_train) )
+    print( "train R^2 {:f}".format( dt.score(X_train, y_train) ))
     scoreModel(y_test, dt.predict(X_test), logit)
     ff = time.time()
     dt.predict(X_0[:100])
-    print "runtime for 100 samples "+str( time.time()-ff )
+    print( "runtime for 100 samples: {:.1e}".format( time.time()-ff ))
     
     ## only saved MLP
     np.save(model_name+'_MLP.npy',mlp)
@@ -160,6 +163,6 @@ class Model():
 """ uncomment createTruth or trainModels() to easily run from the command line
     comment it again before running the main simulator! """
 if __name__=='__main__':
-    pass
+    #pass
     #createTruth(10**6)
-    #trainModels()
+    trainModels()

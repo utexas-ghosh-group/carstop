@@ -42,7 +42,7 @@ vehicle2 = np.array((x2,v2)).T
 mc_samplecounts = np.logspace(1,4,4).astype(int)
 model = Model('MLP')
         
-print "running"
+print("running")
     
 truth = []
 results = defaultdict(list)
@@ -77,10 +77,10 @@ for sim in range(nsims):
 
 truth = np.array(truth)
 ProbabilityOfCollision = sum(truth)/nsims
-print "collisions "+str(ProbabilityOfCollision)
+print( "collisions {:.2f}".format(ProbabilityOfCollision ))
 
 scoring.plotROC(truth, results, savename)
 bigTable = scoring.bigTable(truth, results, z_cost_vals = [1,10,100])
-print bigTable
+print(bigTable)
 if not savename is None:
     bigTable.to_csv(savename+'_scores.csv')

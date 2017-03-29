@@ -58,7 +58,7 @@ def alarm_MCS_2(vehicle1, vehicle2, MM1, MM2, times, nSamples):
     
     
 def alarm_expected(vehicle1, vehicle2, MM1, MM2, times):
-    """ Algorithm 2 in paper, where f(X) is expected value"""
+    """ The most naive approach, ignoring any probabilistic effects. """
     state1 = vehicle1.mean
     state2 = vehicle2.mean
     collided = False
@@ -72,8 +72,9 @@ def alarm_expected(vehicle1, vehicle2, MM1, MM2, times):
     
     
 def alarm_UT_1(vehicle1, vehicle2, MM1, MM2, times):
-    """ Algorithm 2 in paper, where each f_k(X) is the propagation of one UT
-        point. The merge operation is the weighted sum of UT points."""
+    """ Propagates the unscented sample points through each timestep and
+        checks each for collision. Each sample point is effectively mapped to
+        a boolean, which are merged into the final probability estimate. """
     points, weights = UT.getUTpoints(MM1.ndim + MM2.ndim)
     npts = points.shape[0]
     v1 = points[:,:MM1.ndim]
@@ -99,8 +100,7 @@ def alarm_UT_2(vehicle1, vehicle2, MM1, MM2, times):
     """
     A different take on using the unscented transform for collision detection.
     This is not mathematically valid (it completely screws up the
-    time-dependency) but gets much better results. If allowed, I will add this
-    model into the paper before submission - not sure how that works.
+    time-dependency) but gets much better results.
     """
     npoints = vehicle1.utpoints.shape[0]
     weights = np.tile(MM1.weights, (MM2.weights.shape[0],)) *\
