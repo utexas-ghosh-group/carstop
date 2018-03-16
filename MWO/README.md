@@ -11,10 +11,10 @@ Packages used:
 * scikit-video if you want to use video
 
 # usage
-##prepareDataset
+## prepareDataset
 Organizes the benchmark's det.txt file, which is for some reason not time-ordered. It also removes non-human detections from the ground truth file.
 
-##track
+## track
 The main function. All usage options, such as file locations, whether to visualize, and algorithm hyperparameters, are hard-coded at the beginning of the file.
 
 Of course, a variety of details were left out of the paper due to lack of space and presumed reader interest. For one, we are actually running trackers at half the FPS of the standard MOT benchmark. That is, we're updating the trackers on every other image frame. This can be changed by modifying the "skip" parameter. Reporting and scoring still occurs at the original 30fps. We deemed the lower framerate more realistic, given that a deep-learning algorithm is generating these bounding boxes.
@@ -39,5 +39,5 @@ occludability_half_second_ratio = .8
 
 You can use a vanilla tracker w.r.t. the probability of detection by switching the detectability_half_second_ratio to 1, but it does in fact perform worse.
 
-##score
+## score
 Uses a ground truth file from prepDataset.py and a detection file saved by track.py.
