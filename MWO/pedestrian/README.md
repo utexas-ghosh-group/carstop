@@ -51,3 +51,6 @@ The tracking method is deterministic, so results from running this code should b
 
 ## score
 Uses a ground truth file from prepDataset.py and a detection file saved by track.py. Reports MOT benchmark metrics (with some changes such as precision definition, see motmetrics website) and GOSPA.
+
+### p.s.
+If you lower the number of iterations in the LBP data association to a couple hundred, the code gets faster (around 30 fps on my computer) without seeming to lose much accuracy.
