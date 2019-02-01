@@ -3,7 +3,7 @@
 Each code extends Python's multiprocessing.Process() class, as well as implementing `__enter__()` and `__exit__()` for Python's `with` statements. The `__enter__()` function starts the separate process, and the `__exit__()` function terminates it. Hence the syntax for using sensors is simply:
 
 ```python
-with Sensor1(input options) as sensor1, Sensor2(input options) as sensor2:
+with Sensor1(input_options) as sensor1, Sensor2(input_options) as sensor2:
     # do stuff with sensor1 and sensor2
 print("the sensors get shut down before this statement prints")
 ```
