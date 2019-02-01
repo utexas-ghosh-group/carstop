@@ -1,0 +1,8 @@
+classes= 10
+train  = /home/pjreddie/data/coco/trainvalno5k.txt
+valid  = /home/michael_motro/darknet2018/coco_testdev
+#valid = /home/michael_motro/darknet2018/data/coco_val_5k.list
+names = /home/michael_motro/darknet2018/data/coco.names
+backup = /home/michael_motro/darknet2018/backup/
+eval=coco
+
